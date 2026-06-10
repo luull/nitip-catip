@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Box, User, Link, UploadCloud, Trash2, ArrowRight } from "lucide-react";
+import {
+  Box,
+  User,
+  Link,
+  UploadCloud,
+  Trash2,
+  ArrowRight,
+  Check,
+  Copy,
+} from "lucide-react";
 import {
   orderFormSchema,
   OrderFormData,
@@ -31,10 +40,19 @@ export default function OrderForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [copiedBank, setCopiedBank] = useState("");
   const [submittedData, setSubmittedData] = useState<OrderFormData | null>(
     null,
   );
+  const handleCopyBank = async (bankCode: string, accountNumber: string) => {
+    await navigator.clipboard.writeText(accountNumber);
 
+    setCopiedBank(bankCode);
+
+    setTimeout(() => {
+      setCopiedBank("");
+    }, 2000);
+  };
   // Dynamic fee settings state
   const [feeSettings, setFeeSettings] =
     useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
@@ -615,13 +633,39 @@ export default function OrderForm({
                       onClick={() => setSelectedBank(bank.code)}
                       className={`border-4 border-black p-2 cursor-pointer ${
                         selectedBank === bank.code
-                          ? `bg-${bank.color}-200 shadow-none translate-x-[2px] translate-y-[2px]`
+                          ? "bg-green-light shadow-none translate-x-[2px] translate-y-[2px]"
                           : "bg-white shadow-nb-sm"
                       }`}
                     >
                       <h4 className="font-black uppercase">{bank.name}</h4>
 
-                      <p className="text-sm font-bold mt-2">{bank.number}</p>
+                      <div className="flex items-center justify-between mt-2 gap-2">
+                        <p className="text-sm font-bold">{bank.number}</p>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyBank(
+                              bank.code,
+                              bank.number.replace(/\s/g, ""),
+                            );
+                          }}
+                          className="flex items-center gap-1 border-2 border-black px-2 py-1 bg-white hover:bg-gray-100 text-xs font-black"
+                        >
+                          {copiedBank === bank.code ? (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Tersalin
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              Salin
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
