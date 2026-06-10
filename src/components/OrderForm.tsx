@@ -77,6 +77,7 @@ export default function OrderForm({
       catatan: "",
       lampiranUrl: "",
       lampiranName: "",
+      pembayaran: "",
     },
   });
 

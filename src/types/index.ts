@@ -38,6 +38,7 @@ export const orderFormSchema = z.object({
 
   // File Upload (Mock image base64/url for rendering or listing)
   lampiranUrl: z.string().optional(),
+  lampiranName: z.string().optional(),
   pembayaran: z.string().min(1, "Jenis Pembayaran wajib diisi"),
 });
 
