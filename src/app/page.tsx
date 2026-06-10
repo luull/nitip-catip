@@ -46,12 +46,6 @@ export default function Home() {
             <a href="#about" className="hover:text-pink transition-colors">
               Cara Kerja
             </a>
-            <a href="#trips" className="hover:text-pink transition-colors">
-              Open Trips
-            </a>
-            <a href="#catalog" className="hover:text-pink transition-colors">
-              Katalog Populer
-            </a>
           </nav>
 
           <div>
@@ -94,7 +88,20 @@ export default function Home() {
                 variant="green"
                 className="w-full sm:w-auto text-base py-4 px-8 shadow-nb"
               >
-                Mulai Titip Sekarang
+                Gas Jajan Sekarang
+              </NbButton>
+              <NbButton
+                onClick={() =>
+                  window.open(
+                    "https://shopee.co.id/jastip-by-nitipcatip.id-i.268110076.57161747094?extraParams=%7B%22display_model_id%22%3A446024607810%2C%22model_selection_logic%22%3A2%7D",
+                    "_blank",
+                    "noopener,noreferrer",
+                  )
+                }
+                variant="white"
+                className="w-full sm:w-auto text-base py-4 px-8 shadow-nb"
+              >
+                Order Via Shopee
               </NbButton>
             </div>
           </div>
@@ -209,7 +216,7 @@ export default function Home() {
                 N
               </div>
               <span className="text-xl font-black text-white tracking-tight uppercase">
-                Nitip Catip <span className="text-pink">💖</span>
+                Nitip Catip <span className="text-pink">★</span>
               </span>
             </div>
             <p className="text-sm font-bold text-white/70 leading-relaxed max-w-sm">
@@ -228,19 +235,7 @@ export default function Home() {
                   Cara Kerja
                 </a>
               </li>
-              <li>
-                <a href="#trips" className="hover:text-pink transition-colors">
-                  Open Trips
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#catalog"
-                  className="hover:text-pink transition-colors"
-                >
-                  Katalog Populer
-                </a>
-              </li>
+
               <li>
                 <a
                   href="#request-form"
@@ -258,8 +253,8 @@ export default function Home() {
             </h5>
             <ul className="space-y-2 text-sm font-bold">
               <li>Instagram: nitipcatip.id</li>
-              <li>Whatsapp: 0857-7414-0295 </li>
-              <li>Jam Operasional: 09:00 - 18:00 WIB</li>
+              <li>Whatsapp: 0818-0901-0906 </li>
+              <li>Jam Operasional: 09:00 - 17:00 WIB</li>
             </ul>
           </div>
         </div>

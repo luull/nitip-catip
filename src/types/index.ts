@@ -9,23 +9,36 @@ export const orderFormSchema = z.object({
     .regex(/^[0-9]+$/, "Nomor WhatsApp hanya boleh berisi angka")
     .min(9, "Nomor WhatsApp minimal 9 digit")
     .max(15, "Nomor WhatsApp maksimal 15 digit"),
-  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  email: z
+    .string()
+    .min(1, "Email wajib diisi")
+    .email("Format email tidak valid"),
   kotaTujuan: z.string().min(1, "Kota tujuan wajib diisi"),
-  kodePos: z.string().min(1, "Kode pos wajib diisi").regex(/^[0-9]+$/, "Kode pos hanya boleh berisi angka"),
+  kodePos: z
+    .string()
+    .min(1, "Kode pos wajib diisi")
+    .regex(/^[0-9]+$/, "Kode pos hanya boleh berisi angka"),
 
   // Informasi Produk
   namaBarang: z.string().min(1, "Nama produk wajib diisi"),
-  linkProduk: z.string().url("Format link produk tidak valid").or(z.literal("")).optional(),
+  linkProduk: z
+    .string()
+    .url("Format link produk tidak valid")
+    .or(z.literal(""))
+    .optional(),
   ukuranVarian: z.string().optional(),
   warna: z.string().optional(),
   jumlah: z.number().min(1, "Jumlah minimal 1"),
   hargaBarang: z.number().min(0, "Harga barang tidak boleh negatif"),
-  sizeOrder: z.enum(["small", "medium", "large"] as const, "Pilih ukuran order terlebih dahulu"),
+  sizeOrder: z.enum(
+    ["small", "medium", "large"] as const,
+    "Pilih ukuran order terlebih dahulu",
+  ),
   catatan: z.string().optional(),
-  
+
   // File Upload (Mock image base64/url for rendering or listing)
   lampiranUrl: z.string().optional(),
-  lampiranName: z.string().optional(),
+  pembayaran: z.string().min(1, "Jenis Pembayaran wajib diisi"),
 });
 
 export type OrderFormData = z.infer<typeof orderFormSchema>;
@@ -54,10 +67,17 @@ export interface OpenTrip {
 export interface Order extends OrderFormData {
   id: string;
   timestamp: string;
-  status: "Pending" | "Waiting Payment" | "Purchased" | "Shipped" | "Completed" | "Cancelled";
+  status:
+    | "Pending"
+    | "Waiting Payment"
+    | "Purchased"
+    | "Shipped"
+    | "Completed"
+    | "Cancelled";
   feeJastip: number;
   estimasiOngkir: number;
   totalPembayaran: number;
+  pembayaran: string;
 }
 
 export interface FeeSettings {

@@ -11,7 +11,7 @@ const NbTextArea = forwardRef<HTMLTextAreaElement, NbTextAreaProps>(
     return (
       <div className="w-full flex flex-col gap-1.5">
         <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
-          {label} {requiredMark && <span className="text-pink">💖</span>}
+          {label} {requiredMark && <span className="text-pink">★</span>}
         </label>
         <textarea
           ref={ref}
@@ -27,7 +27,7 @@ const NbTextArea = forwardRef<HTMLTextAreaElement, NbTextAreaProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 NbTextArea.displayName = "NbTextArea";

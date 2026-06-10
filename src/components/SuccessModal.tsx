@@ -10,11 +10,19 @@ interface SuccessModalProps {
   flatOngkir: number;
 }
 
-export default function SuccessModal({ isOpen, onClose, orderData, feeJastip, flatOngkir }: SuccessModalProps) {
+export default function SuccessModal({
+  isOpen,
+  onClose,
+  orderData,
+  feeJastip,
+  flatOngkir,
+}: SuccessModalProps) {
   if (!isOpen || !orderData) return null;
 
-  const adminNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281586298430";
-  const totalPrice = (orderData.hargaBarang * orderData.jumlah) + feeJastip + flatOngkir;
+  const adminNumber =
+    process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281586298430";
+  const totalPrice =
+    orderData.hargaBarang * orderData.jumlah + feeJastip + flatOngkir;
 
   // Format currency helper
   const formatIDR = (value: number) => {
@@ -28,7 +36,7 @@ export default function SuccessModal({ isOpen, onClose, orderData, feeJastip, fl
 
   // Generate WhatsApp pre-filled message
   const generateWAMessage = () => {
-    const text = `Halo Kak Admin Nitipcatip! 💖 Saya mau konfirmasi pesanan jastip:
+    const text = `Halo Kak Admin Nitipcatip! ★ Saya mau konfirmasi pesanan jastip:
 
 *Data Pemesan:*
 - Nama: ${orderData.namaPemesan}
@@ -77,7 +85,8 @@ Apakah pesanan saya sudah terdata di sistem? Terima kasih!`;
             🎉 Pesanan Terkirim!
           </h3>
           <p className="text-black/75 text-sm md:text-base font-bold max-w-sm mb-6">
-            Detail request belanja Anda telah sukses tercatat di Google Sheet. Silakan klik tombol di bawah untuk konfirmasi ke WhatsApp Admin.
+            Detail request belanja Anda telah sukses tercatat di Google Sheet.
+            Silakan klik tombol di bawah untuk konfirmasi ke WhatsApp Admin.
           </p>
 
           {/* Quick Summary Card */}
@@ -85,7 +94,7 @@ Apakah pesanan saya sudah terdata di sistem? Terima kasih!`;
             <div className="border-b-2 border-black pb-2 mb-2 font-black uppercase text-xs tracking-wider">
               🧾 Ringkasan Invoice Jastip
             </div>
-            
+
             <div className="flex justify-between">
               <span className="text-black/60">Nama Pemesan</span>
               <span className="text-black">{orderData.namaPemesan}</span>
@@ -98,7 +107,9 @@ Apakah pesanan saya sudah terdata di sistem? Terima kasih!`;
             </div>
             <div className="flex justify-between">
               <span className="text-black/60">Size Order</span>
-              <span className="text-black uppercase">{orderData.sizeOrder}</span>
+              <span className="text-black uppercase">
+                {orderData.sizeOrder}
+              </span>
             </div>
             <div className="flex justify-between border-t-2 border-black pt-3 mt-1 text-base font-black">
               <span>TOTAL ESTIMASI</span>
@@ -117,7 +128,7 @@ Apakah pesanan saya sudah terdata di sistem? Terima kasih!`;
               <MessageSquare className="w-5 h-5 stroke-[2.5]" />
               Hubungi Admin WhatsApp
             </a>
-            
+
             <button
               onClick={onClose}
               className="w-full py-3.5 border-4 border-black bg-white hover:bg-gray-100 transition-colors font-black text-sm uppercase"

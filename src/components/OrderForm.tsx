@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Box, User, Link, UploadCloud, Trash2, ArrowRight } from "lucide-react";
-import { orderFormSchema, OrderFormData, CatalogItem, OpenTrip, FeeSettings } from "@/types";
+import {
+  orderFormSchema,
+  OrderFormData,
+  CatalogItem,
+  OpenTrip,
+  FeeSettings,
+} from "@/types";
 import { DEFAULT_FEE_SETTINGS } from "@/config/jastip";
 import OrderPreviewModal from "./OrderPreviewModal";
 import SuccessModal from "./SuccessModal";
@@ -17,17 +23,28 @@ interface OrderFormProps {
   onClearSelection: () => void;
 }
 
-export default function OrderForm({ selectedItem, selectedTrip, onClearSelection }: OrderFormProps) {
+export default function OrderForm({
+  selectedItem,
+  selectedTrip,
+  onClearSelection,
+}: OrderFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [submittedData, setSubmittedData] = useState<OrderFormData | null>(null);
+  const [submittedData, setSubmittedData] = useState<OrderFormData | null>(
+    null,
+  );
 
   // Dynamic fee settings state
-  const [feeSettings, setFeeSettings] = useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
+  const [feeSettings, setFeeSettings] =
+    useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
 
   // Flat Shipping Fee
-  const FLAT_ONGKIR = 20000;
+  const deliveryPriceMap = {
+    small: 5000,
+    medium: 10000,
+    large: 20000,
+  };
 
   // File states
   const [dragActive, setDragActive] = useState(false);
@@ -85,10 +102,15 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
   const watchJumlah = watch("jumlah", 1);
   const watchHarga = watch("hargaBarang", 0);
   const watchSizeOrder = watch("sizeOrder", "small");
+  const [paymentMethod, setPaymentMethod] = useState("qris");
+  const [selectedBank, setSelectedBank] = useState("");
 
   const feeJastip = feeSettings[watchSizeOrder] || 10000;
   const subtotal = (watchHarga || 0) * (watchJumlah || 1);
-  const total = subtotal + feeJastip + FLAT_ONGKIR;
+  const deliveryPrice =
+    deliveryPriceMap[watchSizeOrder as keyof typeof deliveryPriceMap] || 5000;
+
+  const total = subtotal + feeJastip + deliveryPrice;
 
   // Sync selected catalog item / trip into form fields
   useEffect(() => {
@@ -180,7 +202,7 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
         },
         body: JSON.stringify({
           ...submittedData,
-          estimasiOngkir: FLAT_ONGKIR, // Add derived shipping fee to submission
+          estimasiOngkir: deliveryPrice, // Add derived shipping fee to submission
         }),
       });
 
@@ -192,12 +214,14 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
 
       setIsPreviewOpen(false);
       setIsSuccessOpen(true);
-      
+
       reset();
       removeFile();
       onClearSelection();
     } catch (error: any) {
-      alert(`Error: ${error.message || "Terjadi kesalahan saat mengirim pesanan."}`);
+      alert(
+        `Error: ${error.message || "Terjadi kesalahan saat mengirim pesanan."}`,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -211,15 +235,14 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
           Form Request Jastip 📝
         </h2>
         <p className="text-black/70 text-sm md:text-base font-bold mt-2">
-          Lengkapi data belanja Anda. Tim kami akan memverifikasi order Anda secepatnya!
+          Lengkapi data belanja Anda. Tim kami akan memverifikasi order Anda
+          secepatnya!
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmitValid)} className="space-y-8">
-        
         {/* Main Dual-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          
           {/* LEFT COLUMN: INFORMASI PRODUK */}
           <div className="space-y-6">
             <div className="flex items-center gap-2 border-b-4 border-black pb-3 bg-pink-light/40 px-3 py-1 border border-black shadow-nb-sm">
@@ -246,26 +269,12 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
               error={errors.linkProduk?.message}
             />
 
-            {/* Varian & Warna */}
-            <div className="grid grid-cols-2 gap-4">
-              <NbInput
-                label="Ukuran/Varian"
-                {...register("ukuranVarian")}
-                placeholder="M / 39 / L"
-              />
-              <NbInput
-                label="Warna"
-                {...register("warna")}
-                placeholder="Putih / Hitam"
-              />
-            </div>
-
             {/* Size Order System Selection */}
             <div className="space-y-2">
               <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
-                Size Order <span className="text-pink">💖</span>
+                Size Order <span className="text-pink">★</span>
               </label>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Small */}
                 <div
@@ -333,11 +342,62 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
                 </p>
               )}
             </div>
+            <NbCard
+              variant="green-light"
+              className="p-5 border-4 border-black shadow-nb-sm space-y-4"
+            >
+              <span className="text-sm font-black text-black uppercase tracking-wider block mb-1">
+                💸 KALKULASI HARGA BARANG
+              </span>
 
+              <div className="grid grid-cols-3 gap-3">
+                {/* Jumlah */}
+                <div className="col-span-1">
+                  <label className="block text-black font-black text-xs uppercase mb-1">
+                    Qty
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    {...register("jumlah", { valueAsNumber: true })}
+                    className="w-full p-2 bg-white border-2 border-black text-center font-black text-black text-sm focus:outline-none"
+                  />
+                  {errors.jumlah && (
+                    <p className="text-pink font-black text-[10px] mt-1 uppercase">
+                      {errors.jumlah.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Harga Barang */}
+                <div className="col-span-2">
+                  <label className="block text-black font-black text-xs uppercase mb-1">
+                    Harga Satuan (Rp)
+                  </label>
+                  <input
+                    type="text"
+                    {...register("hargaBarang")}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      const value = target.value.replace(/\D/g, "");
+                      target.value = Number(value || 0).toLocaleString("id-ID");
+
+                      setValue("hargaBarang", Number(value || 0));
+                    }}
+                    className="w-full p-2 bg-white border-2 border-black font-black text-black text-sm focus:outline-none"
+                  />
+                  {errors.hargaBarang && (
+                    <p className="text-pink font-black text-[10px] mt-1 uppercase">
+                      {errors.hargaBarang.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </NbCard>
             {/* File upload drag and drop */}
             <div className="space-y-2">
               <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
-                Foto Referensi Produk (Opsional, Max 5MB)
+                Foto Referensi Produk <br /> (Opsional, Max 5MB)
               </label>
 
               {filePreview ? (
@@ -348,8 +408,12 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
                     className="w-16 h-16 object-cover border-2 border-black"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-black truncate">{fileName}</p>
-                    <p className="text-xs font-bold text-black/70">Foto terlampir</p>
+                    <p className="text-sm font-black text-black truncate">
+                      {fileName}
+                    </p>
+                    <p className="text-xs font-bold text-black/70">
+                      Foto terlampir
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -367,23 +431,34 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
                   onDrop={onDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className={`border-4 border-dashed border-black p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center ${
-                    dragActive ? "bg-pink-light/30" : "bg-white hover:bg-pink-light/10"
+                    dragActive
+                      ? "bg-pink-light/30"
+                      : "bg-white hover:bg-pink-light/10"
                   }`}
                 >
                   <input
                     type="file"
                     ref={fileInputRef}
-                    onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
-                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) =>
+                      e.target.files?.[0] && handleFileChange(e.target.files[0])
+                    }
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
                     className="hidden"
                   />
                   <div className="w-12 h-12 bg-pink border-2 border-black rounded-none flex items-center justify-center mb-3 shadow-nb-sm">
                     <UploadCloud className="w-6 h-6 text-black" />
                   </div>
-                  <p className="text-sm font-black uppercase">Klik atau drop file gambar di sini</p>
-                  <p className="text-xs font-bold text-black/60 mt-1">JPG, PNG, atau WEBP - Max 5MB</p>
+                  <p className="text-sm font-black uppercase">
+                    Klik atau drop file gambar di sini
+                  </p>
+                  <p className="text-xs font-bold text-black/60 mt-1">
+                    JPG, PNG, atau PDF - Max 5MB
+                  </p>
                 </div>
               )}
+              <small style={{ color: "red" }} className="text-red font-bold">
+                *Jika foto items ada banyak, dijadikan 1 PDF
+              </small>
             </div>
           </div>
 
@@ -449,62 +524,144 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
               placeholder="Detail varian, size cadangan, atau instruksi belanja lainnya..."
             />
 
-            {/* Pricing Section: Jumlah & Harga Barang */}
-            <NbCard variant="green-light" className="p-5 border-4 border-black shadow-nb-sm space-y-4">
-              <span className="text-sm font-black text-black uppercase tracking-wider block mb-1">
-                💸 KALKULASI HARGA BARANG
-              </span>
-              
-              <div className="grid grid-cols-3 gap-3">
-                {/* Jumlah */}
-                <div className="col-span-1">
-                  <label className="block text-black font-black text-xs uppercase mb-1">Qty</label>
-                  <input
-                    type="number"
-                    min="1"
-                    {...register("jumlah", { valueAsNumber: true })}
-                    className="w-full p-2 bg-white border-2 border-black text-center font-black text-black text-sm focus:outline-none"
-                  />
-                  {errors.jumlah && (
-                    <p className="text-pink font-black text-[10px] mt-1 uppercase">{errors.jumlah.message}</p>
-                  )}
+            {/* PAYMENT METHOD */}
+            <div className="space-y-4">
+              <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
+                Metode Pembayaran
+              </label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div
+                  onClick={() => setPaymentMethod("qris")}
+                  className={`border-4 border-black p-4 cursor-pointer ${
+                    paymentMethod === "qris"
+                      ? "bg-pink shadow-none translate-x-[2px] translate-y-[2px]"
+                      : "bg-white shadow-nb-sm"
+                  }`}
+                >
+                  <h4 className="font-black uppercase">QRIS</h4>
+                  <p className="text-xs font-bold mt-1">
+                    Scan QR untuk pembayaran
+                  </p>
                 </div>
 
-                {/* Harga Barang */}
-                <div className="col-span-2">
-                  <label className="block text-black font-black text-xs uppercase mb-1">Harga Satuan (Rp)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    {...register("hargaBarang", { valueAsNumber: true })}
-                    className="w-full p-2 bg-white border-2 border-black font-black text-black text-sm focus:outline-none"
-                  />
-                  {errors.hargaBarang && (
-                    <p className="text-pink font-black text-[10px] mt-1 uppercase">{errors.hargaBarang.message}</p>
-                  )}
+                <div
+                  onClick={() => setPaymentMethod("transfer")}
+                  className={`border-4 border-black p-4 cursor-pointer ${
+                    paymentMethod === "transfer"
+                      ? "bg-green shadow-none translate-x-[2px] translate-y-[2px]"
+                      : "bg-white shadow-nb-sm"
+                  }`}
+                >
+                  <h4 className="font-black uppercase">Transfer Bank</h4>
+                  <p className="text-xs font-bold mt-1">
+                    Transfer ke rekening bank
+                  </p>
                 </div>
               </div>
-            </NbCard>
+
+              {/* QRIS */}
+              {paymentMethod === "qris" && (
+                <NbCard
+                  variant="white"
+                  className="p-5 border-4 border-black text-center"
+                >
+                  <h4 className="font-black uppercase mb-3">Scan QRIS</h4>
+
+                  <img
+                    src="/qris.png"
+                    alt="QRIS"
+                    className="w-56 mx-auto border-4 border-black"
+                  />
+
+                  <p className="text-xs font-bold mt-3">
+                    Scan QRIS setelah admin mengkonfirmasi pesanan.
+                  </p>
+                </NbCard>
+              )}
+
+              {/* BANK */}
+              {paymentMethod === "transfer" && (
+                <div className="flex flex-col gap-4">
+                  {[
+                    {
+                      code: "blubca",
+                      name: "BLU BCA (A.N Edita Salsabila)",
+                      number: "0062 3009 8646",
+                      color: "blue",
+                    },
+                    {
+                      code: "bni",
+                      name: "Seabank (A.N Fara Firginia)",
+                      number: "901114533859",
+                      color: "orange",
+                    },
+                    {
+                      code: "permata",
+                      name: "Permata Bank (A.N Edita Salsabila)",
+                      number: "9933116295",
+                      color: "red",
+                    },
+                    {
+                      code: "bca",
+                      name: "BCA (A.N Fara Firginia)",
+                      number: "7475076729",
+                      color: "yellow",
+                    },
+                  ].map((bank) => (
+                    <div
+                      key={bank.code}
+                      onClick={() => setSelectedBank(bank.code)}
+                      className={`border-4 border-black p-2 cursor-pointer ${
+                        selectedBank === bank.code
+                          ? `bg-${bank.color}-200 shadow-none translate-x-[2px] translate-y-[2px]`
+                          : "bg-white shadow-nb-sm"
+                      }`}
+                    >
+                      <h4 className="font-black uppercase">{bank.name}</h4>
+
+                      <p className="text-sm font-bold mt-2">{bank.number}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errors.pembayaran && (
+                <p className="text-pink font-black text-[10px] mt-1 uppercase">
+                  {errors.pembayaran.message}
+                </p>
+              )}
+            </div>
+            {/* Pricing Section: Jumlah & Harga Barang */}
           </div>
         </div>
 
         {/* Real-time Summary Card (Green Neo Brutalism Card) */}
-        <NbCard variant="green" className="p-6 border-4 border-black space-y-3 mt-8">
+        <NbCard
+          variant="green"
+          className="p-6 border-4 border-black space-y-3 mt-8"
+        >
           <h4 className="font-black text-xl uppercase tracking-wider border-b-2 border-black pb-2 text-black">
             📊 RINGKASAN PEMBAYARAN REALTIME
           </h4>
           <div className="space-y-2 font-bold text-black text-sm md:text-base">
             <div className="flex justify-between">
+              <span>Jenis Pembayaran</span>
+              <span>{paymentMethod.toUpperCase()}</span>
+            </div>
+            <div className="flex justify-between">
               <span>Subtotal Barang ({watchJumlah} pcs)</span>
               <span>{formatIDR(subtotal)}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Fee Jastip (Admin Size: {watchSizeOrder})</span>
               <span>{formatIDR(feeJastip)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Ongkir JNE / Flat Local Shipping</span>
-              <span>{formatIDR(FLAT_ONGKIR)}</span>
+              <span>
+                Ongkir JNE / Shopee Shipping (Shipping Size: {watchSizeOrder})
+              </span>
+              <span>{formatIDR(deliveryPrice)}</span>
             </div>
             <div className="flex justify-between border-t-2 border-black pt-2 font-black text-lg md:text-xl text-black">
               <span>TOTAL ESTIMASI</span>
@@ -516,8 +673,12 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
         {/* Form Submit Footer */}
         <div className="border-t-4 border-black pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left bg-white border-4 border-black px-4 py-2 shadow-nb-sm">
-            <span className="text-xs font-black uppercase text-black/60 block">Estimasi Total Bayar</span>
-            <span className="text-2xl font-black text-black">{formatIDR(total)}</span>
+            <span className="text-xs font-black uppercase text-black/60 block">
+              Estimasi Total Bayar
+            </span>
+            <span className="text-2xl font-black text-black">
+              {formatIDR(total)}
+            </span>
           </div>
 
           <NbButton
@@ -529,7 +690,6 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
             <ArrowRight className="w-5 h-5" />
           </NbButton>
         </div>
-
       </form>
 
       {/* Render Modals */}
@@ -541,7 +701,8 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
           orderData={submittedData}
           isLoading={isSubmitting}
           feeJastip={feeJastip}
-          flatOngkir={FLAT_ONGKIR}
+          flatOngkir={deliveryPrice}
+          selectedBank={selectedBank}
         />
       )}
 
@@ -550,7 +711,7 @@ export default function OrderForm({ selectedItem, selectedTrip, onClearSelection
         onClose={() => setIsSuccessOpen(false)}
         orderData={submittedData}
         feeJastip={feeJastip}
-        flatOngkir={FLAT_ONGKIR}
+        flatOngkir={deliveryPrice}
       />
     </NbCard>
   );

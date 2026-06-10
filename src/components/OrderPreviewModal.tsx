@@ -10,6 +10,7 @@ interface OrderPreviewModalProps {
   isLoading: boolean;
   feeJastip: number;
   flatOngkir: number;
+  selectedBank: string;
 }
 
 export default function OrderPreviewModal({
@@ -20,10 +21,12 @@ export default function OrderPreviewModal({
   isLoading,
   feeJastip,
   flatOngkir,
+  selectedBank,
 }: OrderPreviewModalProps) {
   if (!isOpen) return null;
 
-  const totalPrice = (orderData.hargaBarang * orderData.jumlah) + feeJastip + flatOngkir;
+  const totalPrice =
+    orderData.hargaBarang * orderData.jumlah + feeJastip + flatOngkir;
 
   // Format currency helper
   const formatIDR = (value: number) => {
@@ -59,7 +62,6 @@ export default function OrderPreviewModal({
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-black">
           {/* Dual Column Info Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
             {/* Buyer Info */}
             <div className="space-y-4 border-4 border-black p-4 bg-green-light/20 shadow-nb-sm">
               <h4 className="font-black text-black flex items-center gap-2 border-b-2 border-black pb-2 text-sm uppercase tracking-wider">
@@ -68,19 +70,27 @@ export default function OrderPreviewModal({
               </h4>
               <div className="space-y-2 text-sm font-bold">
                 <div>
-                  <span className="text-black/60 block text-xs uppercase font-black">Nama Lengkap</span>
+                  <span className="text-black/60 block text-xs uppercase font-black">
+                    Nama Lengkap
+                  </span>
                   <span className="text-black">{orderData.namaPemesan}</span>
                 </div>
                 <div>
-                  <span className="text-black/60 block text-xs uppercase font-black">WhatsApp</span>
+                  <span className="text-black/60 block text-xs uppercase font-black">
+                    WhatsApp
+                  </span>
                   <span className="text-black">{orderData.whatsapp}</span>
                 </div>
                 <div>
-                  <span className="text-black/60 block text-xs uppercase font-black">Email</span>
+                  <span className="text-black/60 block text-xs uppercase font-black">
+                    Email
+                  </span>
                   <span className="text-black">{orderData.email}</span>
                 </div>
                 <div>
-                  <span className="text-black/60 block text-xs uppercase font-black">Alamat Tujuan</span>
+                  <span className="text-black/60 block text-xs uppercase font-black">
+                    Alamat Tujuan
+                  </span>
                   <span className="text-black">
                     {orderData.kotaTujuan}, {orderData.kodePos}
                   </span>
@@ -96,12 +106,16 @@ export default function OrderPreviewModal({
               </h4>
               <div className="space-y-2 text-sm font-bold">
                 <div>
-                  <span className="text-black/60 block text-xs uppercase font-black">Nama Barang</span>
+                  <span className="text-black/60 block text-xs uppercase font-black">
+                    Nama Barang
+                  </span>
                   <span className="text-black">{orderData.namaBarang}</span>
                 </div>
                 {orderData.linkProduk && (
                   <div>
-                    <span className="text-black/60 block text-xs uppercase font-black">Link Produk</span>
+                    <span className="text-black/60 block text-xs uppercase font-black">
+                      Link Produk
+                    </span>
                     <a
                       href={orderData.linkProduk}
                       target="_blank"
@@ -114,23 +128,43 @@ export default function OrderPreviewModal({
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-black/60 block text-xs uppercase font-black">Varian</span>
-                    <span className="text-black">{orderData.ukuranVarian || "-"}</span>
+                    <span className="text-black/60 block text-xs uppercase font-black">
+                      Varian
+                    </span>
+                    <span className="text-black">
+                      {orderData.ukuranVarian || "-"}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-black/60 block text-xs uppercase font-black">Warna</span>
+                    <span className="text-black/60 block text-xs uppercase font-black">
+                      Warna
+                    </span>
                     <span className="text-black">{orderData.warna || "-"}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-black/20 pt-2">
                   <div>
-                    <span className="text-black/60 block text-xs uppercase font-black">Qty</span>
+                    <span className="text-black/60 block text-xs uppercase font-black">
+                      Qty
+                    </span>
                     <span className="text-black">{orderData.jumlah}x</span>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-black/60 block text-xs uppercase font-black">Harga</span>
-                    <span className="text-black">{formatIDR(orderData.hargaBarang)}</span>
+                    <span className="text-black/60 block text-xs uppercase font-black">
+                      Harga
+                    </span>
+                    <span className="text-black">
+                      {formatIDR(orderData.hargaBarang)}
+                    </span>
                   </div>
+                </div>
+                <div>
+                  <span className="text-black/60 block text-xs uppercase font-black">
+                    jenis Pembayaran
+                  </span>
+                  <span className="text-black">
+                    {selectedBank.toUpperCase()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -148,7 +182,9 @@ export default function OrderPreviewModal({
                 <span className="text-sm font-black block truncate max-w-sm">
                   {orderData.lampiranName || "Gambar Produk"}
                 </span>
-                <span className="text-xs font-bold text-black/60">Foto Referensi Terlampir</span>
+                <span className="text-xs font-bold text-black/60">
+                  Foto Referensi Terlampir
+                </span>
               </div>
             </div>
           )}
@@ -156,7 +192,9 @@ export default function OrderPreviewModal({
           {/* Notes */}
           {orderData.catatan && (
             <div className="border-4 border-black bg-white p-4 font-bold text-sm shadow-nb-sm">
-              <span className="text-black/60 block text-xs uppercase font-black mb-1">Catatan Pemesan</span>
+              <span className="text-black/60 block text-xs uppercase font-black mb-1">
+                Catatan Pemesan
+              </span>
               <p className="italic">{orderData.catatan}</p>
             </div>
           )}
@@ -191,7 +229,7 @@ export default function OrderPreviewModal({
           >
             Batal & Edit
           </button>
-          
+
           <button
             onClick={onConfirm}
             disabled={isLoading}
