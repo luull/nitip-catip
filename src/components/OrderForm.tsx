@@ -737,7 +737,7 @@ export default function OrderForm({
         </div>
       </form>
       <NbCard
-        variant="yellow"
+        variant="white"
         className="p-5 mt-3 border-4 border-black space-y-3"
       >
         <div>
