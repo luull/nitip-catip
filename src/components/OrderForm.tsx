@@ -129,7 +129,7 @@ export default function OrderForm({
   const deliveryPrice =
     deliveryPriceMap[watchSizeOrder as keyof typeof deliveryPriceMap] || 5000;
 
-  const total = subtotal + feeJastip + deliveryPrice;
+  const total = subtotal + feeJastip;
 
   // Sync selected catalog item / trip into form fields
   useEffect(() => {
@@ -702,7 +702,7 @@ export default function OrderForm({
               <span>Fee Jastip (Admin Size: {watchSizeOrder})</span>
               <span>{formatIDR(feeJastip)}</span>
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>
                 Ongkir JNE / Shopee Shipping (Shipping Size: {watchSizeOrder})
               </span>
@@ -711,7 +711,7 @@ export default function OrderForm({
             <div className="flex justify-between border-t-2 border-black pt-2 font-black text-lg md:text-xl text-black">
               <span>TOTAL ESTIMASI</span>
               <span>{formatIDR(total)}</span>
-            </div>
+            </div> */}
           </div>
         </NbCard>
 
@@ -719,7 +719,7 @@ export default function OrderForm({
         <div className="border-t-4 border-black pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left bg-white border-4 border-black px-4 py-2 shadow-nb-sm">
             <span className="text-xs font-black uppercase text-black/60 block">
-              Estimasi Total Bayar
+              Estimasi Ongkir
             </span>
             <span className="text-2xl font-black text-black">
               {formatIDR(total)}
@@ -736,6 +736,40 @@ export default function OrderForm({
           </NbButton>
         </div>
       </form>
+      <NbCard
+        variant="yellow"
+        className="p-5 mt-3 border-4 border-black space-y-3"
+      >
+        <div>
+          <h4 className="font-black text-lg uppercase">🚚 Pembayaran Ongkir</h4>
+
+          <p className="text-sm font-bold mt-2">
+            Ongkir dibayarkan terpisah melalui Shopee setelah proses jastip
+            selesai
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            window.open(
+              "https://shopee.co.id/jastip-by-nitipcatip.id-i.268110076.57161747094?extraParams=%7B%22display_model_id%22%3A446024607810%2C%22model_selection_logic%22%3A2%7D",
+              "_blank",
+              "noopener,noreferrer",
+            )
+          }
+          className="w-full border-4 border-black bg-orange-300 px-4 py-3 font-black uppercase shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb transition-all"
+        >
+          Bayar Ongkir via Shopee →
+        </button>
+
+        <div className="border-t-2 border-black pt-3">
+          <p className="text-xs font-bold">
+            ⚠️ Setelah pembayaran ongkir selesai, simpan bukti pembayaran dan
+            lanjutkan proses konfirmasi kepada admin.
+          </p>
+        </div>
+      </NbCard>
 
       {/* Render Modals */}
       {submittedData && (

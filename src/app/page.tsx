@@ -30,7 +30,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-pink border-4 border-black flex items-center justify-center text-black font-black text-2xl shadow-nb-sm">
-              N
+              ★
             </div>
             <div>
               <span className="text-xl sm:text-2xl font-black text-black tracking-tight block">
@@ -89,19 +89,6 @@ export default function Home() {
                 className="w-full sm:w-auto text-base py-4 px-8 shadow-nb"
               >
                 Gas Jajan Sekarang
-              </NbButton>
-              <NbButton
-                onClick={() =>
-                  window.open(
-                    "https://shopee.co.id/jastip-by-nitipcatip.id-i.268110076.57161747094?extraParams=%7B%22display_model_id%22%3A446024607810%2C%22model_selection_logic%22%3A2%7D",
-                    "_blank",
-                    "noopener,noreferrer",
-                  )
-                }
-                variant="white"
-                className="w-full sm:w-auto text-base py-4 px-8 shadow-nb"
-              >
-                Order Via Shopee
               </NbButton>
             </div>
           </div>

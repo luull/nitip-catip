@@ -25,8 +25,7 @@ export default function OrderPreviewModal({
 }: OrderPreviewModalProps) {
   if (!isOpen) return null;
 
-  const totalPrice =
-    orderData.hargaBarang * orderData.jumlah + feeJastip + flatOngkir;
+  const totalPrice = orderData.hargaBarang * orderData.jumlah + feeJastip;
 
   // Format currency helper
   const formatIDR = (value: number) => {
@@ -209,10 +208,10 @@ export default function OrderPreviewModal({
               <span>Jastip Size Fee ({orderData.sizeOrder.toUpperCase()})</span>
               <span>{formatIDR(feeJastip)}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            {/* <div className="flex justify-between text-sm">
               <span>Ongkos Kirim JNE</span>
               <span>{formatIDR(flatOngkir)}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between pt-3 border-t-2 border-black text-base font-black">
               <span>TOTAL ESTIMASI BAYAR</span>
               <span className="text-lg">{formatIDR(totalPrice)}</span>
