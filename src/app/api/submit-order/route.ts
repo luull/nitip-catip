@@ -32,11 +32,14 @@ export async function POST(request: NextRequest) {
 
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
     if (!scriptUrl) {
-      console.error("GOOGLE_SCRIPT_URL is not defined in environment variables");
+      console.error(
+        "GOOGLE_SCRIPT_URL is not defined in environment variables",
+      );
       return NextResponse.json(
         {
           success: false,
-          error: "Konfigurasi server bermasalah (Google Apps Script URL tidak diset).",
+          error:
+            "Konfigurasi server bermasalah (Google Apps Script URL tidak diset).",
         },
         { status: 500 },
       );
@@ -53,12 +56,16 @@ export async function POST(request: NextRequest) {
         feeSettings = JSON.parse(fileContent);
       }
     } catch (err) {
-      console.error("Failed to read dynamic fee settings, using defaults:", err);
+      console.error(
+        "Failed to read dynamic fee settings, using defaults:",
+        err,
+      );
     }
 
     const feeJastip = feeSettings[orderData.sizeOrder] || 10000;
     const flatOngkir = body.estimasiOngkir || 20000;
-    const totalPembayaran = (orderData.hargaBarang * orderData.jumlah) + feeJastip + flatOngkir;
+    const totalPembayaran =
+      orderData.hargaBarang * orderData.jumlah + feeJastip + flatOngkir;
 
     // 3. Auto-generate Order ID: NC-YYYYMMDD-NNN
     const datePrefix = getFormattedDate();
@@ -67,21 +74,25 @@ export async function POST(request: NextRequest) {
     try {
       // Fetch orders to determine sequence number
       const ordersRes = await fetch(`${scriptUrl}?action=getOrders`, {
-        next: { revalidate: 0 } // Disable fetch caching
+        next: { revalidate: 0 }, // Disable fetch caching
       });
       if (ordersRes.ok) {
         const data = await ordersRes.json();
         if (data.success && Array.isArray(data.orders)) {
           // Count orders with today's date prefix
-          const todayOrdersCount = data.orders.filter((order: any) => 
-            order.id && order.id.startsWith(`NC-${datePrefix}-`)
+          const todayOrdersCount = data.orders.filter(
+            (order: any) =>
+              order.id && order.id.startsWith(`NC-${datePrefix}-`),
           ).length;
 
           sequenceNumber = String(todayOrdersCount + 1).padStart(3, "0");
         }
       }
     } catch (err) {
-      console.error("Failed to fetch orders for ID generation, generating random sequence:", err);
+      console.error(
+        "Failed to fetch orders for ID generation, generating random sequence:",
+        err,
+      );
       // Fallback: Random sequence number between 100 and 999 to prevent collision
       sequenceNumber = String(Math.floor(Math.random() * 900) + 100);
     }
@@ -90,8 +101,11 @@ export async function POST(request: NextRequest) {
 
     // WIB Timestamp string
     const now = new Date();
-    const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-    const timestampStr = wibTime.toISOString().replace("T", " ").substring(0, 19);
+    const wibTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const timestampStr = wibTime
+      .toISOString()
+      .replace("T", " ")
+      .substring(0, 19);
 
     // 4. Prepare payload for Google Sheet
     const payload = {
@@ -114,7 +128,7 @@ export async function POST(request: NextRequest) {
       kodePos: orderData.kodePos,
       catatan: orderData.catatan || "",
       lampiranUrl: orderData.lampiranUrl || "",
-      lampiranName: orderData.lampiranName || "",
+      pembayaran: orderData.pembayaran || "",
     };
 
     // 5. Send POST request to Google Apps Script
@@ -129,7 +143,11 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("Google Apps Script response error:", response.status, text);
+      console.error(
+        "Google Apps Script response error:",
+        response.status,
+        text,
+      );
       throw new Error(`Google Apps Script returned status ${response.status}`);
     }
 
@@ -146,7 +164,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Terjadi kesalahan internal saat mengirim pesanan. Silakan coba lagi.",
+        error:
+          "Terjadi kesalahan internal saat mengirim pesanan. Silakan coba lagi.",
         details: error?.message || error,
       },
       { status: 500 },
