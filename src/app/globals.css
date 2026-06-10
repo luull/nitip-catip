@@ -1,26 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFF8FB;
+  --foreground: #000000;
+  --pink: #FF69B4;
+  --pink-light: #FFB6D9;
+  --green: #A3E635;
+  --green-light: #D9F99D;
+  --border: #000000;
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-pink: var(--pink);
+  --color-pink-light: var(--pink-light);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-nb-border: var(--border);
+  --font-sans: "Space Grotesk", "Inter", sans-serif;
+  --shadow-nb: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-nb-lg: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-nb-sm: 2px 2px 0px 0px rgba(0, 0, 0, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Global styles */
+html {
+  scroll-behavior: smooth;
+  font-family: "Space Grotesk", "Inter", sans-serif;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Neo Brutalism Base Classes */
+.nb-card {
+  background-color: #ffffff;
+  border: 4px solid var(--border);
+  box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  transition: all 0.15s ease-in-out;
+}
+
+.nb-card-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-btn {
+  border: 4px solid var(--border);
+  font-weight: 900;
+  text-transform: uppercase;
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nb-btn-pink {
+  background-color: var(--pink);
+  color: #000000;
+  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-btn-pink:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-btn-green {
+  background-color: var(--green);
+  color: #000000;
+  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-btn-green:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-btn-white {
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-btn-white:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.nb-input {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border: 4px solid var(--border);
+  font-weight: 700;
+  color: #000000;
+  box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 1);
+  transition: all 0.1s ease-in-out;
+}
+
+.nb-input:focus {
+  outline: none;
+  background-color: #ffffff;
+  box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 1);
+  transform: translate(-1px, -1px);
+}
+
+/* Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-nb-shake {
+  animation: shake 0.2s ease-in-out 0s 2;
 }
