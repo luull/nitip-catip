@@ -726,6 +726,10 @@ export default function OrderForm({
 
         {/* COD / Gosend CTA */}
         {(shippingMethod === "cod" || shippingMethod === "gosend") && (
+          <>
+            <p className="text-xs font-bold text-black/70">
+            ℹ️ Pengiriman Shopee dilakukan dihari H atau selambat-lambatnya H+1 setelah barang dibeli.
+          </p>
           <button
             type="button"
             onClick={() =>
@@ -741,6 +745,7 @@ export default function OrderForm({
           >
             Konfirmasi via WhatsApp Admin →
           </button>
+          </>
         )}
 
         <div className="border-t-2 border-black pt-3">
