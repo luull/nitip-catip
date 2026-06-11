@@ -60,9 +60,9 @@ export default function AdminLayout({
             <span className="text-lg font-black tracking-tight block uppercase">
               Admin Panel ⚡
             </span>
-            <span className="text-[10px] text-black/60 font-black tracking-wider block -mt-1">
+            {/* <span className="text-[10px] text-black/60 font-black tracking-wider block -mt-1">
               NITIP CATIP MANAGEMENT
-            </span>
+            </span> */}
           </div>
         </div>
 

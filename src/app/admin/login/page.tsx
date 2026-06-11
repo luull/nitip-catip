@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import NbButton from "@/components/ui/NbButton";
 import NbInput from "@/components/ui/NbInput";
@@ -16,7 +16,6 @@ export default function AdminLoginPage() {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isExpired = searchParams.get("expired") === "1";
 
@@ -34,13 +33,13 @@ function LoginForm() {
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) {
-            router.replace("/admin");
+            window.location.href = "/admin";
           }
         }
       } catch {}
     }
     checkAuth();
-  }, [router]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +61,7 @@ function LoginForm() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
         setError(data.error || "Login gagal");
       }
