@@ -282,10 +282,10 @@ function RiwayatContent() {
                     <span className="text-black/60">Fee Jastip</span>
                     <span>{formatIDR(order.total_fee_jastip)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <span className="text-black/60">Ongkir</span>
                     <span>{formatIDR(order.ongkir)}</span>
-                  </div>
+                  </div> */}
                   <div className="flex justify-between border-t-2 border-black pt-2 text-base font-black">
                     <span>Total</span>
                     <span>{formatIDR(order.total_pembayaran)}</span>
