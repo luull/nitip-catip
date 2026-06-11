@@ -10,34 +10,44 @@ import NbButton from "@/components/ui/NbButton";
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [sheetStatus, setSheetStatus] = useState<"connected" | "disconnected">("disconnected");
+  const [dataSource, setDataSource] = useState<"supabase" | "sheets" | "none">("none");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDashboardData() {
       setIsLoading(true);
+      try {
+        // Try Supabase first
+        const res = await fetch("/api/admin/supabase-orders");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.orders?.length > 0) {
+            setOrders(data.orders || []);
+            setDataSource("supabase");
+            return;
+          }
+        }
+      } catch {} finally {
+        setIsLoading(false);
+      }
+
+      // Fallback to Google Sheets
       try {
         const res = await fetch("/api/admin/orders");
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
             setOrders(data.orders || []);
-            setSheetStatus(data.sheetStatus);
-          } else {
-            setError(data.error || "Gagal memuat data sheet.");
-            setSheetStatus("disconnected");
+            setDataSource("sheets");
+            return;
           }
-        } else {
-          throw new Error("HTTP error loading orders");
         }
-      } catch (err: any) {
-        console.error("Dashboard error:", err);
-        setError("Gagal terhubung dengan server API.");
-        setSheetStatus("disconnected");
-      } finally {
+      } catch {} finally {
         setIsLoading(false);
       }
+
+      setDataSource("none");
+      setIsLoading(false);
     }
     loadDashboardData();
   }, []);
@@ -128,15 +138,19 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Google Sheet Connection Badge */}
+        {/* Data Source Badge */}
         <div>
-          {sheetStatus === "connected" ? (
+          {dataSource === "supabase" ? (
             <NbBadge variant="green" className="shadow-nb-sm py-2 px-3 text-sm">
-              🟢 Google Sheet Connected
+              🟢 Supabase Connected
+            </NbBadge>
+          ) : dataSource === "sheets" ? (
+            <NbBadge variant="yellow" className="shadow-nb-sm py-2 px-3 text-sm">
+              📊 Google Sheet Connected
             </NbBadge>
           ) : (
             <NbBadge variant="pink" className="shadow-nb-sm py-2 px-3 text-sm animate-nb-shake">
-              🔴 Google Sheet Disconnected
+              🔴 No Data Source
             </NbBadge>
           )}
         </div>
@@ -257,11 +271,13 @@ export default function AdminDashboard() {
             </h4>
             <div className="text-sm space-y-2 text-black/80">
               <div className="flex justify-between">
-                <span>Google Apps Script:</span>
-                <span className="font-black text-green">Online</span>
+                <span>Sumber Data:</span>
+                <span className="font-black uppercase text-pink">
+                  {dataSource === "supabase" ? "Supabase" : dataSource === "sheets" ? "Google Sheet" : "Tidak Ada"}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span>Total Data Sinkron:</span>
+                <span>Total Data:</span>
                 <span className="font-black">{orders.length} Order</span>
               </div>
               <div className="flex justify-between">

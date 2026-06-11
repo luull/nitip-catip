@@ -20,12 +20,15 @@ import {
   FeeSettings,
 } from "@/types";
 import { DEFAULT_FEE_SETTINGS } from "@/config/jastip";
+import { useCart } from "@/context/CartContext";
 import OrderPreviewModal from "./OrderPreviewModal";
 import SuccessModal from "./SuccessModal";
+import ShippingModal from "./ShippingModal";
 import NbCard from "./ui/NbCard";
 import NbButton from "./ui/NbButton";
 import NbInput from "./ui/NbInput";
 import NbTextArea from "./ui/NbTextArea";
+import { ShoppingCart } from "lucide-react";
 
 interface OrderFormProps {
   selectedItem: CatalogItem | null;
@@ -46,16 +49,18 @@ const EMPTY_ITEM = {
 };
 
 const WA_ADMIN_NUMBER = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281809010906";
-const WA_GROUP_LINK = "https://chat.whatsapp.com/GR91ffPlxPuI1jfG3ABrup?mode=gi_t"; // placeholder
 
 export default function OrderForm({
   selectedItem,
   selectedTrip,
   onClearSelection,
 }: OrderFormProps) {
+  const { addItem } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isShippingOpen, setIsShippingOpen] = useState(false);
+  const [orderId, setOrderId] = useState("");
   const [copiedBank, setCopiedBank] = useState("");
   const [submittedData, setSubmittedData] = useState<OrderFormData | null>(
     null,
@@ -131,7 +136,6 @@ export default function OrderForm({
 
   // Watch all items for calculations
   const watchItems = watch("items");
-  const [shippingMethod, setShippingMethod] = useState("");
 
   // Calculate totals across all items
   const totalSubtotal = (watchItems || []).reduce(
@@ -273,6 +277,7 @@ export default function OrderForm({
         body: JSON.stringify({
           ...submittedData,
           estimasiOngkir: totalDelivery,
+          paymentMethod,
         }),
       });
 
@@ -283,6 +288,9 @@ export default function OrderForm({
         err.details = result.details;
         throw err;
       }
+
+      // Capture orderId from response
+      setOrderId(result.orderId || "");
 
       setIsPreviewOpen(false);
       setIsSuccessOpen(true);
@@ -629,133 +637,54 @@ export default function OrderForm({
             </span>
           </div>
 
-          <NbButton
-            type="submit"
-            variant="pink"
-            className="w-full sm:w-auto text-base"
-          >
-            Preview & Kirim Request
-            <ArrowRight className="w-5 h-5" />
-          </NbButton>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <NbButton
+              type="button"
+              variant="green"
+              className="w-full sm:w-auto text-sm"
+              onClick={() => {
+                const currentItems = watch("items");
+                if (currentItems && currentItems.length > 0) {
+                  currentItems.forEach((item) => {
+                    if (item && item.namaBarang) {
+                      addItem({
+                        namaBarang: item.namaBarang,
+                        linkProduk: item.linkProduk,
+                        ukuranVarian: item.ukuranVarian,
+                        warna: item.warna,
+                        jumlah: item.jumlah || 1,
+                        hargaBarang: item.hargaBarang || 0,
+                        sizeOrder: item.sizeOrder || "small",
+                        lampiranUrl: item.lampiranUrl,
+                        lampiranName: item.lampiranName,
+                      });
+                    }
+                  });
+                  Swal.fire({
+                    icon: "success",
+                    title: "Ditambahkan ke Keranjang!",
+                    text: `${currentItems.filter((i: any) => i?.namaBarang).length} produk berhasil disimpan ke keranjang.`,
+                    timer: 2000,
+                    showConfirmButton: false,
+                  });
+                }
+              }}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Simpan Keranjang
+            </NbButton>
+
+            <NbButton
+              type="submit"
+              variant="pink"
+              className="w-full sm:w-auto text-base"
+            >
+              Preview & Kirim Request
+              <ArrowRight className="w-5 h-5" />
+            </NbButton>
+          </div>
         </div>
       </form>
-      <NbCard
-        variant="white"
-        className="p-5 mt-3 border-4 border-black space-y-4"
-      >
-        <div>
-          <h4 className="font-black text-lg uppercase">
-            🚚 Pengiriman Barang
-          </h4>
-          <p className="text-sm font-bold mt-2 text-black/70">
-            Pilih metode pengiriman setelah proses jastip selesai.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Shopee Checkout */}
-          <button
-            type="button"
-            onClick={() => setShippingMethod("shopee")}
-            className={`border-4 border-black p-4 text-left cursor-pointer transition-all ${
-              shippingMethod === "shopee"
-                ? "bg-orange-300 shadow-none translate-x-[2px] translate-y-[2px]"
-                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-            }`}
-          >
-            <h4 className="font-black text-sm uppercase">🛒 Checkout via Shopee</h4>
-            <p className="text-xs font-bold mt-1 text-black/70">
-              + Packaging rapih
-            </p>
-          </button>
-
-          {/* COD */}
-          <button
-            type="button"
-            onClick={() => setShippingMethod("cod")}
-            className={`border-4 border-black p-4 text-left cursor-pointer transition-all ${
-              shippingMethod === "cod"
-                ? "bg-green-light shadow-none translate-x-[2px] translate-y-[2px]"
-                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-            }`}
-          >
-            <h4 className="font-black text-sm uppercase">💵 Cash on Delivery</h4>
-            <p className="text-xs font-bold mt-1 text-black/70">
-              Konfirmasi via WA
-            </p>
-          </button>
-
-          {/* Gosend/Grab */}
-          <button
-            type="button"
-            onClick={() => setShippingMethod("gosend")}
-            className={`border-4 border-black p-4 text-left cursor-pointer transition-all ${
-              shippingMethod === "gosend"
-                ? "bg-pink-light shadow-none translate-x-[2px] translate-y-[2px]"
-                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-            }`}
-          >
-            <h4 className="font-black text-sm uppercase">⚡ Gosend / Grab Instant</h4>
-            <p className="text-xs font-bold mt-1 text-black/70">
-              Konfirmasi via WA
-            </p>
-          </button>
-        </div>
-
-        {/* Shopee CTA */}
-        {shippingMethod === "shopee" && (
-          <>
-             <p className="text-xs font-bold text-black/70">
-            ℹ️ Pengiriman Shopee dilakukan H+2 setelah barang dibeli.
-          </p>
-          <button
-            type="button"
-            onClick={() =>
-              window.open(
-                "https://shopee.co.id/jastip-by-nitipcatip.id-i.268110076.57161747094?extraParams=%7B%22display_model_id%22%3A446024607810%2C%22model_selection_logic%22%3A2%7D",
-                "_blank",
-                "noopener,noreferrer",
-              )
-            }
-            className="w-full border-4 border-black bg-orange-300 px-4 py-3 font-black uppercase shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb transition-all"
-          >
-            Bayar Ongkir via Shopee →
-          </button>
-          </>
-        )}
-
-        {/* COD / Gosend CTA */}
-        {(shippingMethod === "cod" || shippingMethod === "gosend") && (
-          <>
-            <p className="text-xs font-bold text-black/70">
-            ℹ️ Pengiriman Shopee dilakukan dihari H atau selambat-lambatnya H+1 setelah barang dibeli.
-          </p>
-          <button
-            type="button"
-            onClick={() =>
-              window.open(
-                `https://wa.me/${WA_ADMIN_NUMBER.replace(/\D/g, "")}?text=${encodeURIComponent(
-                  `Halo Admin, saya mau konfirmasi pengiriman via ${shippingMethod === "cod" ? "Cash on Delivery" : "Gosend/Grab Instant"}. Mohon infonya ya!`,
-                )}`,
-                "_blank",
-                "noopener,noreferrer",
-              )
-            }
-            className="w-full border-4 border-black bg-green px-4 py-3 font-black uppercase shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb transition-all flex items-center justify-center gap-2"
-          >
-            Konfirmasi via WhatsApp Admin →
-          </button>
-          </>
-        )}
-
-        <div className="border-t-2 border-black pt-3">
-          <p className="text-xs font-bold text-black/70">
-            ⚠️ Setelah pembayaran ongkir selesai, simpan bukti pembayaran dan
-            lanjutkan proses konfirmasi kepada admin.
-          </p>
-        </div>
-      </NbCard>
-
       {/* Render Modals */}
       {submittedData && (
         <OrderPreviewModal
@@ -772,10 +701,29 @@ export default function OrderForm({
 
       <SuccessModal
         isOpen={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)}
+        onClose={() => {
+          setIsSuccessOpen(false);
+          setSubmittedData(null);
+        }}
         orderData={submittedData}
+        orderId={orderId}
         feeJastip={totalFeeJastip}
         flatOngkir={totalDelivery}
+        onChooseShipping={() => {
+          setIsSuccessOpen(false);
+          setIsShippingOpen(true);
+        }}
+      />
+
+      <ShippingModal
+        isOpen={isShippingOpen}
+        onClose={() => {
+          setIsShippingOpen(false);
+          setSubmittedData(null);
+        }}
+        orderId={orderId}
+        whatsapp={submittedData?.whatsapp || ""}
+        namaPemesan={submittedData?.namaPemesan || ""}
       />
     </NbCard>
   );

@@ -49,6 +49,55 @@ export const orderFormSchema = z.object({
 
 export type OrderFormData = z.infer<typeof orderFormSchema>;
 
+/* ── Supabase / DB Types ──────────────────────────────── */
+
+export interface DbCustomer {
+  id: string;
+  nama_pemesan: string;
+  whatsapp: string;
+  email: string;
+  kota_tujuan: string;
+  kode_pos: string;
+  created_at: string;
+}
+
+export interface DbOrderItem {
+  id: string;
+  order_id: string;
+  nama_barang: string;
+  link_produk?: string;
+  ukuran_varian?: string;
+  warna?: string;
+  jumlah: number;
+  harga_barang: number;
+  size_order: string;
+  fee_jastip: number;
+  subtotal: number;
+  lampiran_url?: string;
+  lampiran_name?: string;
+}
+
+export interface DbOrder {
+  id: string;
+  customer_id?: string;
+  nama_pemesan: string;
+  whatsapp: string;
+  email: string;
+  kota_tujuan: string;
+  kode_pos: string;
+  total_harga_barang: number;
+  total_fee_jastip: number;
+  total_pembayaran: number;
+  ongkir: number;
+  shipping_method?: string;
+  shipping_status: string;
+  payment_method: string;
+  status: string;
+  catatan?: string;
+  created_at: string;
+  order_items?: DbOrderItem[];
+}
+
 export interface CatalogItem {
   id: string;
   name: string;
@@ -100,6 +149,7 @@ export interface Order {
   feeJastip: number;
   estimasiOngkir: number;
   totalPembayaran: number;
+  pengiriman: number;
 }
 
 export interface FeeSettings {

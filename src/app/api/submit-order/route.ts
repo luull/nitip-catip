@@ -3,6 +3,7 @@ import { orderFormSchema } from "@/types";
 import { DEFAULT_FEE_SETTINGS } from "@/config/jastip";
 import fs from "fs";
 import path from "path";
+import { supabase } from "@/lib/supabase";
 
 // Helper to format date as YYYYMMDD
 function getFormattedDate() {
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
         lampiranUrl: item.lampiranUrl || "",
         lampiranName: item.lampiranName || "",
         pembayaran: orderData.pembayaran || "",
+        pengiriman: "",
       };
 
       // Send POST request to Google Apps Script
@@ -171,6 +173,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Save to Supabase (non-blocking, alongside Google Sheets) ──
+    if (supabase) {
+      await saveToSupabase(
+        orderData,
+        orderId,
+        feeSettings,
+        flatOngkir,
+        body.paymentMethod || "qris",
+      );
+    }
+
     return NextResponse.json({
       success: true,
       message: "Pesanan berhasil dikirim ke Google Sheet.",
@@ -189,5 +202,93 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 },
     );
+  }
+}
+
+// ─── Save to Supabase (called after Google Sheets success) ─────────────
+async function saveToSupabase(
+  orderData: any,
+  orderId: string,
+  feeSettings: any,
+  flatOngkir: number,
+  paymentMethod: string,
+) {
+  try {
+    // 1. Upsert customer by whatsapp
+    const { data: customer, error: custErr } = await supabase!
+      .from("customers")
+      .upsert(
+        {
+          nama_pemesan: orderData.namaPemesan,
+          whatsapp: orderData.whatsapp,
+          email: orderData.email,
+          kota_tujuan: orderData.kotaTujuan,
+          kode_pos: orderData.kodePos,
+        },
+        { onConflict: "whatsapp" },
+      )
+      .select("id")
+      .single();
+
+    if (custErr) console.error("Supabase customer upsert error:", custErr);
+
+    const customerId = customer?.id || null;
+
+    // 2. Calculate totals
+    const totalHargaBarang = orderData.items.reduce(
+      (sum: number, item: any) => sum + item.hargaBarang * item.jumlah,
+      0,
+    );
+    const totalFeeJastip = orderData.items.reduce(
+      (sum: number, item: any) => sum + (feeSettings[item.sizeOrder] || 3000),
+      0,
+    );
+    const totalPembayaran = totalHargaBarang + totalFeeJastip + flatOngkir;
+
+    // 3. Insert order
+    const { error: orderErr } = await supabase!.from("orders").insert({
+      id: orderId,
+      customer_id: customerId,
+      nama_pemesan: orderData.namaPemesan,
+      whatsapp: orderData.whatsapp,
+      email: orderData.email,
+      kota_tujuan: orderData.kotaTujuan,
+      kode_pos: orderData.kodePos,
+      total_harga_barang: totalHargaBarang,
+      total_fee_jastip: totalFeeJastip,
+      total_pembayaran: totalPembayaran,
+      ongkir: flatOngkir,
+      payment_method: paymentMethod,
+      status: "pending",
+      shipping_status: "pending",
+      catatan: orderData.catatan || null,
+    });
+
+    if (orderErr) console.error("Supabase order insert error:", orderErr);
+
+    // 4. Insert order items
+    const orderItems = orderData.items.map((item: any) => ({
+      order_id: orderId,
+      nama_barang: item.namaBarang,
+      link_produk: item.linkProduk || null,
+      ukuran_varian: item.ukuranVarian || null,
+      warna: item.warna || null,
+      jumlah: item.jumlah,
+      harga_barang: item.hargaBarang,
+      size_order: item.sizeOrder,
+      fee_jastip: feeSettings[item.sizeOrder] || 3000,
+      subtotal: item.hargaBarang * item.jumlah,
+      lampiran_url: item.lampiranUrl || null,
+      lampiran_name: item.lampiranName || null,
+    }));
+
+    const { error: itemsErr } = await supabase!
+      .from("order_items")
+      .insert(orderItems);
+
+    if (itemsErr) console.error("Supabase order_items insert error:", itemsErr);
+  } catch (err) {
+    console.error("saveToSupabase failed (non-blocking):", err);
+    // Non-blocking: don't throw, Google Sheets is the primary DB
   }
 }

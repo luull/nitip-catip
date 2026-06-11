@@ -4,10 +4,13 @@ import OrderForm from "@/components/OrderForm";
 import NbBadge from "@/components/ui/NbBadge";
 import NbButton from "@/components/ui/NbButton";
 import { CatalogItem, OpenTrip } from "@/types";
-import { CheckCircle, ShieldCheck, Users, MessageCircle } from "lucide-react";
+import { CheckCircle, ShieldCheck, Users, MessageCircle, ShoppingCart, History } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { useCart } from "@/context/CartContext";
+
 export default function Home() {
+  const { totalCount } = useCart();
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<OpenTrip | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -45,6 +48,25 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-8 text-sm sm:text-base font-black uppercase tracking-wider">
             <a href="#about" className="hover:text-pink transition-colors">
               Cara Kerja
+            </a>
+            <a
+              href="/cart"
+              className="flex items-center gap-1.5 hover:text-pink transition-colors relative"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Keranjang
+              {totalCount > 0 && (
+                <span className="absolute -top-2 -right-4 bg-pink border-2 border-black text-[10px] font-black w-5 h-5 flex items-center justify-center">
+                  {totalCount}
+                </span>
+              )}
+            </a>
+            <a
+              href="/riwayat"
+              className="flex items-center gap-1.5 hover:text-pink transition-colors"
+            >
+              <History className="w-4 h-4" />
+              Riwayat
             </a>
             <a
               href="https://chat.whatsapp.com/GR91ffPlxPuI1jfG3ABrup?mode=gi_t"
@@ -168,9 +190,9 @@ export default function Home() {
       <section
         id="request-form"
         ref={formRef}
-        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t-4 border-black"
+        className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-5 py-16 border-t-4 border-black"
       >
-        {/* Selected autofill alert */}
+        {/* Selected autofill alert
         {(selectedItem || selectedTrip) && (
           <div className="mb-6 p-4 bg-amber-300 border-4 border-black text-black text-sm font-black shadow-nb flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -194,7 +216,7 @@ export default function Home() {
               [ Bersihkan ]
             </button>
           </div>
-        )}
+        )} */}
 
         <OrderForm
           selectedItem={selectedItem}
@@ -237,6 +259,16 @@ export default function Home() {
                   className="hover:text-pink transition-colors"
                 >
                   Form Pemesanan
+                </a>
+              </li>
+              <li>
+                <a href="/cart" className="hover:text-pink transition-colors flex items-center gap-1">
+                  <ShoppingCart className="w-3.5 h-3.5" /> Keranjang Saya
+                </a>
+              </li>
+              <li>
+                <a href="/riwayat" className="hover:text-pink transition-colors flex items-center gap-1">
+                  <History className="w-3.5 h-3.5" /> Riwayat Pesanan
                 </a>
               </li>
               <li>

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingCart, Settings, Menu, X, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Settings, Menu, X, ArrowLeft, LogOut } from "lucide-react";
 import NbButton from "@/components/ui/NbButton";
 
 export default function AdminLayout({
@@ -14,21 +14,26 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const handleLogout = async () => {
+    await fetch("/api/admin/login", { method: "DELETE" });
+    window.location.href = "/admin/login";
+  };
+
   const navItems = [
     {
-      name: "Dashboard 📊",
+      name: "Dashboard",
       href: "/admin",
       icon: LayoutDashboard,
       active: pathname === "/admin"
     },
     {
-      name: "Daftar Pesanan 🛍️",
+      name: "Daftar Pesanan ",
       href: "/admin/orders",
       icon: ShoppingCart,
       active: pathname === "/admin/orders"
     },
     {
-      name: "Setting Fee ⚙️",
+      name: "Setting Fee",
       href: "/admin/settings/fee",
       icon: Settings,
       active: pathname === "/admin/settings/fee"
@@ -61,7 +66,14 @@ export default function AdminLayout({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleLogout}
+            className="border-2 border-black p-2 bg-white hover:bg-red-100 shadow-nb-sm transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-4 h-4 stroke-[2.5]" />
+          </button>
           <Link href="/">
             <NbButton variant="white" className="py-2 px-4 text-xs sm:text-sm shadow-nb-sm">
               <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
