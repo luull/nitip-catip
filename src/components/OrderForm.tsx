@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   User,
-  Link,
   UploadCloud,
   Trash2,
   ArrowRight,
   Check,
   Copy,
+  Plus,
 } from "lucide-react";
 import {
   orderFormSchema,
@@ -31,6 +31,18 @@ interface OrderFormProps {
   selectedTrip: OpenTrip | null;
   onClearSelection: () => void;
 }
+
+const EMPTY_ITEM = {
+  namaBarang: "",
+  linkProduk: "",
+  ukuranVarian: "",
+  warna: "",
+  jumlah: 1,
+  hargaBarang: 0,
+  sizeOrder: "small" as const,
+  lampiranUrl: "",
+  lampiranName: "",
+};
 
 export default function OrderForm({
   selectedItem,
@@ -64,18 +76,13 @@ export default function OrderForm({
     large: 20000,
   };
 
-  // File states
-  const [dragActive, setDragActive] = useState(false);
-  const [fileName, setFileName] = useState<string>("");
-  const [filePreview, setFilePreview] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const {
     register,
     handleSubmit,
     setValue,
     watch,
     reset,
+    control,
     formState: { errors },
   } = useForm<OrderFormData>({
     resolver: zodResolver(orderFormSchema),
@@ -85,18 +92,19 @@ export default function OrderForm({
       email: "",
       kotaTujuan: "",
       kodePos: "",
-      namaBarang: "",
-      linkProduk: "",
-      ukuranVarian: "",
-      warna: "",
-      jumlah: 1,
-      hargaBarang: 0,
-      sizeOrder: "small",
+      items: [{ ...EMPTY_ITEM }],
       catatan: "",
-      lampiranUrl: "",
-      lampiranName: "",
       pembayaran: "",
     },
+  });
+
+  const {
+    fields: itemFields,
+    append: appendItem,
+    remove: removeItem,
+  } = useFieldArray({
+    control,
+    name: "items",
   });
 
   // Fetch current fee settings from admin endpoint on mount
@@ -117,30 +125,41 @@ export default function OrderForm({
     fetchFees();
   }, []);
 
-  // Watch fields for calculations
-  const watchJumlah = watch("jumlah", 1);
-  const watchHarga = watch("hargaBarang", 0);
-  const watchSizeOrder = watch("sizeOrder", "small");
+  // Watch all items for calculations
+  const watchItems = watch("items");
   const [paymentMethod, setPaymentMethod] = useState("qris");
   const [selectedBank, setSelectedBank] = useState("");
 
-  const feeJastip = feeSettings[watchSizeOrder] || 10000;
-  const subtotal = (watchHarga || 0) * (watchJumlah || 1);
-  const deliveryPrice =
-    deliveryPriceMap[watchSizeOrder as keyof typeof deliveryPriceMap] || 5000;
+  // Calculate totals across all items
+  const totalSubtotal = (watchItems || []).reduce(
+    (sum, item) => sum + (item?.hargaBarang || 0) * (item?.jumlah || 1),
+    0,
+  );
+  const totalFeeJastip = (watchItems || []).reduce(
+    (sum, item) => sum + (feeSettings[item?.sizeOrder || "small"] || 10000),
+    0,
+  );
+  const totalDelivery = (watchItems || []).reduce(
+    (sum, item) =>
+      sum +
+      (deliveryPriceMap[
+        (item?.sizeOrder || "small") as keyof typeof deliveryPriceMap
+      ] || 5000),
+    0,
+  );
+  const grandTotal = totalSubtotal + totalFeeJastip;
 
-  const total = subtotal + feeJastip;
-
-  // Sync selected catalog item / trip into form fields
+  // Sync selected catalog item / trip into the LAST product item
   useEffect(() => {
     if (selectedItem) {
-      setValue("namaBarang", selectedItem.name);
-      setValue("hargaBarang", selectedItem.price);
+      const lastIdx = itemFields.length - 1;
+      setValue(`items.${lastIdx}.namaBarang`, selectedItem.name);
+      setValue(`items.${lastIdx}.hargaBarang`, selectedItem.price);
       if (selectedItem.defaultLink) {
-        setValue("linkProduk", selectedItem.defaultLink);
+        setValue(`items.${lastIdx}.linkProduk`, selectedItem.defaultLink);
       }
     }
-  }, [selectedItem, setValue]);
+  }, [selectedItem, setValue, itemFields.length]);
 
   useEffect(() => {
     if (selectedTrip) {
@@ -148,8 +167,13 @@ export default function OrderForm({
     }
   }, [selectedTrip, setValue]);
 
-  // Handle File upload
-  const handleFileChange = (file: File) => {
+  // File upload handlers per product item
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [filePreviews, setFilePreviews] = useState<Record<number, string>>({});
+  const [fileNames, setFileNames] = useState<Record<number, string>>({});
+  const [dragActive, setDragActive] = useState<number | null>(null);
+
+  const handleFileChange = (index: number, file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       alert("Ukuran file tidak boleh melebihi 5MB.");
       return;
@@ -158,41 +182,60 @@ export default function OrderForm({
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
-      setFilePreview(base64String);
-      setFileName(file.name);
-      setValue("lampiranUrl", base64String);
-      setValue("lampiranName", file.name);
+      setFilePreviews((prev) => ({ ...prev, [index]: base64String }));
+      setFileNames((prev) => ({ ...prev, [index]: file.name }));
+      setValue(`items.${index}.lampiranUrl`, base64String);
+      setValue(`items.${index}.lampiranName`, file.name);
     };
     reader.readAsDataURL(file);
   };
 
-  const onDrag = (e: React.DragEvent) => {
+  const onDrag = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
+      setDragActive(index);
     } else if (e.type === "dragleave") {
-      setDragActive(false);
+      setDragActive(null);
     }
   };
 
-  const onDrop = (e: React.DragEvent) => {
+  const onDrop = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragActive(false);
+    setDragActive(null);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
+      handleFileChange(index, e.dataTransfer.files[0]);
     }
   };
 
-  const removeFile = () => {
-    setFilePreview("");
-    setFileName("");
-    setValue("lampiranUrl", "");
-    setValue("lampiranName", "");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const removeFile = (index: number) => {
+    setFilePreviews((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    setFileNames((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    setValue(`items.${index}.lampiranUrl`, "");
+    setValue(`items.${index}.lampiranName`, "");
+    if (fileInputRefs.current[index]) {
+      fileInputRefs.current[index]!.value = "";
     }
+  };
+
+  const addNewItem = () => {
+    appendItem({ ...EMPTY_ITEM });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    if (itemFields.length <= 1) return;
+    removeItem(index);
+    // Clean up file refs
+    removeFile(index);
   };
 
   // Currency Formatter Helper
@@ -221,7 +264,7 @@ export default function OrderForm({
         },
         body: JSON.stringify({
           ...submittedData,
-          estimasiOngkir: deliveryPrice, // Add derived shipping fee to submission
+          estimasiOngkir: totalDelivery,
         }),
       });
 
@@ -235,7 +278,8 @@ export default function OrderForm({
       setIsSuccessOpen(true);
 
       reset();
-      removeFile();
+      setFilePreviews({});
+      setFileNames({});
       onClearSelection();
     } catch (error: any) {
       alert(
@@ -254,231 +298,63 @@ export default function OrderForm({
           Form Request Jastip 📝
         </h2>
         <p className="text-black/70 text-sm md:text-base font-bold mt-2">
-          Lengkapi data belanja Anda. Tim kami akan memverifikasi order Anda
-          secepatnya!
+          Lengkapi data belanja Anda. Tambahkan beberapa produk sekaligus! Tim
+          kami akan memverifikasi order Anda secepatnya!
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmitValid)} className="space-y-8">
         {/* Main Dual-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* LEFT COLUMN: INFORMASI PRODUK */}
+          {/* LEFT COLUMN: PRODUCT ITEMS */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2 border-b-4 border-black pb-3 bg-pink-light/40 px-3 py-1 border border-black shadow-nb-sm">
-              <Box className="w-5 h-5 text-black stroke-[2.5]" />
-              <h3 className="font-black text-black tracking-widest text-sm md:text-base uppercase">
-                I. DETAIL PRODUK BELANJAAN
-              </h3>
-            </div>
-
-            {/* Nama Produk */}
-            <NbInput
-              label="Nama Barang"
-              requiredMark
-              {...register("namaBarang")}
-              placeholder="Contoh: Gentle Woman Canvas Tote Bag"
-              error={errors.namaBarang?.message}
-            />
-
-            {/* Link Barang */}
-            <NbInput
-              label="Link Produk (Opsional)"
-              {...register("linkProduk")}
-              placeholder="https://www.gentlewomanonline.com/..."
-              error={errors.linkProduk?.message}
-            />
-
-            {/* Size Order System Selection */}
-            <div className="space-y-2">
-              <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
-                Size Order <span className="text-pink">★</span>
-              </label>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Small */}
-                <div
-                  onClick={() => setValue("sizeOrder", "small")}
-                  className={`border-4 border-black p-4 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
-                    watchSizeOrder === "small"
-                      ? "bg-pink shadow-none translate-x-[2px] translate-y-[2px]"
-                      : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-                  }`}
-                >
-                  <div>
-                    <h4 className="font-black text-base uppercase">Small</h4>
-                    <p className="text-xs font-bold mt-1 text-black/80">
-                      Accessories, Makeup, Small Items
-                    </p>
-                  </div>
-                  <span className="font-black text-sm mt-3 block border-t-2 border-black pt-1">
-                    {formatIDR(feeSettings.small)}
-                  </span>
-                </div>
-
-                {/* Medium */}
-                <div
-                  onClick={() => setValue("sizeOrder", "medium")}
-                  className={`border-4 border-black p-4 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
-                    watchSizeOrder === "medium"
-                      ? "bg-green shadow-none translate-x-[2px] translate-y-[2px]"
-                      : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-                  }`}
-                >
-                  <div>
-                    <h4 className="font-black text-base uppercase">Medium</h4>
-                    <p className="text-xs font-bold mt-1 text-black/80">
-                      Clothes, Small Bags
-                    </p>
-                  </div>
-                  <span className="font-black text-sm mt-3 block border-t-2 border-black pt-1">
-                    {formatIDR(feeSettings.medium)}
-                  </span>
-                </div>
-
-                {/* Large */}
-                <div
-                  onClick={() => setValue("sizeOrder", "large")}
-                  className={`border-4 border-black p-4 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
-                    watchSizeOrder === "large"
-                      ? "bg-amber-300 shadow-none translate-x-[2px] translate-y-[2px]"
-                      : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-                  }`}
-                >
-                  <div>
-                    <h4 className="font-black text-base uppercase">Large</h4>
-                    <p className="text-xs font-bold mt-1 text-black/80">
-                      Shoes, Large Bags, Bulky Items
-                    </p>
-                  </div>
-                  <span className="font-black text-sm mt-3 block border-t-2 border-black pt-1">
-                    {formatIDR(feeSettings.large)}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between border-b-4 border-black pb-3 bg-pink-light/40 px-3 py-1 border border-black shadow-nb-sm">
+              <div className="flex items-center gap-2">
+                <Box className="w-5 h-5 text-black stroke-[2.5]" />
+                <h3 className="font-black text-black tracking-widest text-sm md:text-base uppercase">
+                  DETAIL PRODUK BELANJAAN
+                </h3>
               </div>
-              {errors.sizeOrder && (
-                <p className="text-pink font-black text-xs uppercase mt-1">
-                  ⚠️ {errors.sizeOrder.message}
-                </p>
-              )}
-            </div>
-            <NbCard
-              variant="green-light"
-              className="p-5 border-4 border-black shadow-nb-sm space-y-4"
-            >
-              <span className="text-sm font-black text-black uppercase tracking-wider block mb-1">
-                💸 KALKULASI HARGA BARANG
+              <span className="bg-black text-white font-black text-xs px-2 py-1">
+                {itemFields.length} PRODUK
               </span>
-
-              <div className="grid grid-cols-3 gap-3">
-                {/* Jumlah */}
-                <div className="col-span-1">
-                  <label className="block text-black font-black text-xs uppercase mb-1">
-                    Qty
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    {...register("jumlah", { valueAsNumber: true })}
-                    className="w-full p-2 bg-white border-2 border-black text-center font-black text-black text-sm focus:outline-none"
-                  />
-                  {errors.jumlah && (
-                    <p className="text-pink font-black text-[10px] mt-1 uppercase">
-                      {errors.jumlah.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Harga Barang */}
-                <div className="col-span-2">
-                  <label className="block text-black font-black text-xs uppercase mb-1">
-                    Harga Satuan (Rp)
-                  </label>
-                  <input
-                    type="text"
-                    {...register("hargaBarang")}
-                    onInput={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      const value = target.value.replace(/\D/g, "");
-                      target.value = Number(value || 0).toLocaleString("id-ID");
-
-                      setValue("hargaBarang", Number(value || 0));
-                    }}
-                    className="w-full p-2 bg-white border-2 border-black font-black text-black text-sm focus:outline-none"
-                  />
-                  {errors.hargaBarang && (
-                    <p className="text-pink font-black text-[10px] mt-1 uppercase">
-                      {errors.hargaBarang.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </NbCard>
-            {/* File upload drag and drop */}
-            <div className="space-y-2">
-              <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
-                Foto Referensi Produk <br /> (Opsional, Max 5MB)
-              </label>
-
-              {filePreview ? (
-                <div className="relative flex items-center gap-4 p-4 border-4 border-black bg-green-light">
-                  <img
-                    src={filePreview}
-                    alt="Upload Preview"
-                    className="w-16 h-16 object-cover border-2 border-black"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-black truncate">
-                      {fileName}
-                    </p>
-                    <p className="text-xs font-bold text-black/70">
-                      Foto terlampir
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removeFile}
-                    className="p-2 border-2 border-black bg-pink hover:bg-pink-light transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5 text-black" />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onDragEnter={onDrag}
-                  onDragOver={onDrag}
-                  onDragLeave={onDrag}
-                  onDrop={onDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-4 border-dashed border-black p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center ${
-                    dragActive
-                      ? "bg-pink-light/30"
-                      : "bg-white hover:bg-pink-light/10"
-                  }`}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) =>
-                      e.target.files?.[0] && handleFileChange(e.target.files[0])
-                    }
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    className="hidden"
-                  />
-                  <div className="w-12 h-12 bg-pink border-2 border-black rounded-none flex items-center justify-center mb-3 shadow-nb-sm">
-                    <UploadCloud className="w-6 h-6 text-black" />
-                  </div>
-                  <p className="text-sm font-black uppercase">
-                    Klik atau drop file gambar di sini
-                  </p>
-                  <p className="text-xs font-bold text-black/60 mt-1">
-                    JPG, PNG, atau PDF - Max 5MB
-                  </p>
-                </div>
-              )}
-              <small style={{ color: "red" }} className="text-red font-bold">
-                *Jika foto items ada banyak, dijadikan 1 PDF
-              </small>
             </div>
+
+            {/* Render each product item */}
+            {itemFields.map((field, index) => (
+              <ProductItemCard
+                key={field.id}
+                index={index}
+                register={register}
+                watch={watch}
+                setValue={setValue}
+                errors={errors}
+                feeSettings={feeSettings}
+                formatIDR={formatIDR}
+                filePreview={filePreviews[index]}
+                fileName={fileNames[index]}
+                dragActive={dragActive === index}
+                fileInputRef={(el: HTMLInputElement | null) => {
+                  fileInputRefs.current[index] = el;
+                }}
+                onFileChange={(file: File) => handleFileChange(index, file)}
+                onDrag={(e: React.DragEvent) => onDrag(e, index)}
+                onDrop={(e: React.DragEvent) => onDrop(e, index)}
+                onRemoveFile={() => removeFile(index)}
+                onRemoveItem={() => handleRemoveItem(index)}
+                canRemove={itemFields.length > 1}
+              />
+            ))}
+
+            {/* Add Product Button */}
+            <button
+              type="button"
+              onClick={addNewItem}
+              className="w-full border-4 border-dashed border-black bg-white/50 hover:bg-pink-light/30 p-4 flex items-center justify-center gap-2 font-black uppercase text-sm transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb hover:border-solid"
+            >
+              <Plus className="w-5 h-5" />
+              Tambah Produk Lainnya
+            </button>
           </div>
 
           {/* RIGHT COLUMN: INFORMASI PEMBELI */}
@@ -486,7 +362,7 @@ export default function OrderForm({
             <div className="flex items-center gap-2 border-b-4 border-black pb-3 bg-green-light/40 px-3 py-1 border border-black shadow-nb-sm">
               <User className="w-5 h-5 text-black stroke-[2.5]" />
               <h3 className="font-black text-black tracking-widest text-sm md:text-base uppercase">
-                II. DETAIL PENGIRIMAN & DATA PEMESAN
+                DETAIL PENGIRIMAN & DATA PEMESAN
               </h3>
             </div>
 
@@ -676,11 +552,10 @@ export default function OrderForm({
                 </p>
               )}
             </div>
-            {/* Pricing Section: Jumlah & Harga Barang */}
           </div>
         </div>
 
-        {/* Real-time Summary Card (Green Neo Brutalism Card) */}
+        {/* Real-time Summary Card */}
         <NbCard
           variant="green"
           className="p-6 border-4 border-black space-y-3 mt-8"
@@ -694,24 +569,21 @@ export default function OrderForm({
               <span>{paymentMethod.toUpperCase()}</span>
             </div>
             <div className="flex justify-between">
-              <span>Subtotal Barang ({watchJumlah} pcs)</span>
-              <span>{formatIDR(subtotal)}</span>
+              <span>
+                Subtotal ({itemFields.length} produk,{" "}
+                {(watchItems || []).reduce(
+                  (s, i) => s + (i?.jumlah || 0),
+                  0,
+                )}{" "}
+                pcs)
+              </span>
+              <span>{formatIDR(totalSubtotal)}</span>
             </div>
 
             <div className="flex justify-between">
-              <span>Fee Jastip (Admin Size: {watchSizeOrder})</span>
-              <span>{formatIDR(feeJastip)}</span>
+              <span>Total Fee Jastip ({itemFields.length} item)</span>
+              <span>{formatIDR(totalFeeJastip)}</span>
             </div>
-            {/* <div className="flex justify-between">
-              <span>
-                Ongkir JNE / Shopee Shipping (Shipping Size: {watchSizeOrder})
-              </span>
-              <span>{formatIDR(deliveryPrice)}</span>
-            </div>
-            <div className="flex justify-between border-t-2 border-black pt-2 font-black text-lg md:text-xl text-black">
-              <span>TOTAL ESTIMASI</span>
-              <span>{formatIDR(total)}</span>
-            </div> */}
           </div>
         </NbCard>
 
@@ -722,7 +594,7 @@ export default function OrderForm({
               Estimasi Ongkir
             </span>
             <span className="text-2xl font-black text-black">
-              {formatIDR(total)}
+              {formatIDR(grandTotal)}
             </span>
           </div>
 
@@ -741,7 +613,9 @@ export default function OrderForm({
         className="p-5 mt-3 border-4 border-black space-y-3"
       >
         <div>
-          <h4 className="font-black text-lg uppercase">🚚 Pembayaran Ongkir</h4>
+          <h4 className="font-black text-lg uppercase">
+            🚚 Pembayaran Ongkir
+          </h4>
 
           <p className="text-sm font-bold mt-2">
             Ongkir dibayarkan terpisah melalui Shopee setelah proses jastip
@@ -779,8 +653,8 @@ export default function OrderForm({
           onConfirm={handleConfirmSubmit}
           orderData={submittedData}
           isLoading={isSubmitting}
-          feeJastip={feeJastip}
-          flatOngkir={deliveryPrice}
+          feeJastip={totalFeeJastip}
+          flatOngkir={totalDelivery}
           selectedBank={selectedBank}
         />
       )}
@@ -789,9 +663,304 @@ export default function OrderForm({
         isOpen={isSuccessOpen}
         onClose={() => setIsSuccessOpen(false)}
         orderData={submittedData}
-        feeJastip={feeJastip}
-        flatOngkir={deliveryPrice}
+        feeJastip={totalFeeJastip}
+        flatOngkir={totalDelivery}
       />
+    </NbCard>
+  );
+}
+
+/* ─── Product Item Card (repeatable per product) ─────────────────────── */
+
+interface ProductItemCardProps {
+  index: number;
+  register: any;
+  watch: any;
+  setValue: any;
+  errors: any;
+  feeSettings: FeeSettings;
+  formatIDR: (v: number) => string;
+  filePreview?: string;
+  fileName?: string;
+  dragActive: boolean;
+  fileInputRef: (el: HTMLInputElement | null) => void;
+  onFileChange: (file: File) => void;
+  onDrag: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onRemoveFile: () => void;
+  onRemoveItem: () => void;
+  canRemove: boolean;
+}
+
+function ProductItemCard({
+  index,
+  register,
+  watch,
+  setValue,
+  errors,
+  feeSettings,
+  formatIDR,
+  filePreview,
+  fileName,
+  dragActive,
+  fileInputRef,
+  onFileChange,
+  onDrag,
+  onDrop,
+  onRemoveFile,
+  onRemoveItem,
+  canRemove,
+}: ProductItemCardProps) {
+  const watchSizeOrder = watch(`items.${index}.sizeOrder`, "small");
+  const itemError = errors?.items?.[index];
+
+  return (
+    <NbCard
+      variant="white"
+      className="p-5 border-4 border-black shadow-nb-sm space-y-4 relative"
+    >
+      {/* Card Header */}
+      <div className="flex items-center justify-between">
+        <span className="bg-pink border-2 border-black px-2 py-1 font-black text-xs uppercase">
+          PRODUK #{index + 1}
+        </span>
+        {canRemove && (
+          <button
+            type="button"
+            onClick={onRemoveItem}
+            className="flex items-center gap-1 border-2 border-black bg-white hover:bg-pink-light px-2 py-1 text-xs font-black transition-colors"
+          >
+            <Trash2 className="w-3 h-3" />
+            Hapus
+          </button>
+        )}
+      </div>
+
+      {/* Nama Produk */}
+      <NbInput
+        label="Nama Barang"
+        requiredMark
+        {...register(`items.${index}.namaBarang`)}
+        placeholder="Contoh: Gentle Woman Canvas Tote Bag"
+        error={itemError?.namaBarang?.message}
+      />
+
+      {/* Link Barang */}
+      <NbInput
+        label="Link Produk (Opsional)"
+        {...register(`items.${index}.linkProduk`)}
+        placeholder="https://www.gentlewomanonline.com/..."
+        error={itemError?.linkProduk?.message}
+      />
+
+      {/* Varian & Warna */}
+      <div className="grid grid-cols-2 gap-3">
+        <NbInput
+          label="Ukuran / Varian"
+          {...register(`items.${index}.ukuranVarian`)}
+          placeholder="S, M, L, dll"
+          error={itemError?.ukuranVarian?.message}
+        />
+        <NbInput
+          label="Warna"
+          {...register(`items.${index}.warna`)}
+          placeholder="Hitam, Putih, dll"
+          error={itemError?.warna?.message}
+        />
+      </div>
+
+      {/* Size Order System Selection */}
+      <div className="space-y-2">
+        <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
+          Size Order <span className="text-pink">★</span>
+        </label>
+
+        <div className="grid grid-cols-3 gap-3">
+          {/* Small */}
+          <div
+            onClick={() => setValue(`items.${index}.sizeOrder`, "small")}
+            className={`border-4 border-black p-3 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
+              watchSizeOrder === "small"
+                ? "bg-pink shadow-none translate-x-[2px] translate-y-[2px]"
+                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+            }`}
+          >
+            <div>
+              <h4 className="font-black text-sm uppercase">Small</h4>
+              <p className="text-[10px] font-bold mt-1 text-black/80">
+                Accessories, Makeup
+              </p>
+            </div>
+            <span className="font-black text-xs mt-2 block border-t-2 border-black pt-1">
+              {formatIDR(feeSettings.small)}
+            </span>
+          </div>
+
+          {/* Medium */}
+          <div
+            onClick={() => setValue(`items.${index}.sizeOrder`, "medium")}
+            className={`border-4 border-black p-3 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
+              watchSizeOrder === "medium"
+                ? "bg-green shadow-none translate-x-[2px] translate-y-[2px]"
+                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+            }`}
+          >
+            <div>
+              <h4 className="font-black text-sm uppercase">Medium</h4>
+              <p className="text-[10px] font-bold mt-1 text-black/80">
+                Clothes, Small Bags
+              </p>
+            </div>
+            <span className="font-black text-xs mt-2 block border-t-2 border-black pt-1">
+              {formatIDR(feeSettings.medium)}
+            </span>
+          </div>
+
+          {/* Large */}
+          <div
+            onClick={() => setValue(`items.${index}.sizeOrder`, "large")}
+            className={`border-4 border-black p-3 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
+              watchSizeOrder === "large"
+                ? "bg-amber-300 shadow-none translate-x-[2px] translate-y-[2px]"
+                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+            }`}
+          >
+            <div>
+              <h4 className="font-black text-sm uppercase">Large</h4>
+              <p className="text-[10px] font-bold mt-1 text-black/80">
+                Shoes, Large Bags
+              </p>
+            </div>
+            <span className="font-black text-xs mt-2 block border-t-2 border-black pt-1">
+              {formatIDR(feeSettings.large)}
+            </span>
+          </div>
+        </div>
+        {itemError?.sizeOrder && (
+          <p className="text-pink font-black text-xs uppercase mt-1">
+            ⚠️ {itemError.sizeOrder.message}
+          </p>
+        )}
+      </div>
+
+      {/* Qty & Harga */}
+      <NbCard
+        variant="green-light"
+        className="p-4 border-4 border-black shadow-nb-sm space-y-3"
+      >
+        <span className="text-xs font-black text-black uppercase tracking-wider block mb-1">
+          💸 KALKULASI HARGA
+        </span>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-1">
+            <label className="block text-black font-black text-xs uppercase mb-1">
+              Qty
+            </label>
+            <input
+              type="number"
+              min="1"
+              {...register(`items.${index}.jumlah`, { valueAsNumber: true })}
+              className="w-full p-2 bg-white border-2 border-black text-center font-black text-black text-sm focus:outline-none"
+            />
+            {itemError?.jumlah && (
+              <p className="text-pink font-black text-[10px] mt-1 uppercase">
+                {itemError.jumlah.message}
+              </p>
+            )}
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-black font-black text-xs uppercase mb-1">
+              Harga Satuan (Rp)
+            </label>
+            <input
+              type="text"
+              {...register(`items.${index}.hargaBarang`)}
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                const value = target.value.replace(/\D/g, "");
+                target.value = Number(value || 0).toLocaleString("id-ID");
+                setValue(`items.${index}.hargaBarang`, Number(value || 0));
+              }}
+              className="w-full p-2 bg-white border-2 border-black font-black text-black text-sm focus:outline-none"
+            />
+            {itemError?.hargaBarang && (
+              <p className="text-pink font-black text-[10px] mt-1 uppercase">
+                {itemError.hargaBarang.message}
+              </p>
+            )}
+          </div>
+        </div>
+      </NbCard>
+
+      {/* File upload drag and drop */}
+      <div className="space-y-2">
+        <label className="block text-black font-black text-xs uppercase tracking-wider">
+          Foto Referensi (Opsional, Max 5MB)
+        </label>
+
+        {filePreview ? (
+          <div className="relative flex items-center gap-4 p-3 border-4 border-black bg-green-light">
+            <img
+              src={filePreview}
+              alt="Upload Preview"
+              className="w-14 h-14 object-cover border-2 border-black"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black text-black truncate">
+                {fileName}
+              </p>
+              <p className="text-[10px] font-bold text-black/70">
+                Foto terlampir
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRemoveFile}
+              className="p-2 border-2 border-black bg-pink hover:bg-pink-light transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-black" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onDragEnter={onDrag}
+            onDragOver={onDrag}
+            onDragLeave={onDrag}
+            onDrop={onDrop}
+            onClick={() => {
+              const el = document.getElementById(`file-input-${index}`);
+              el?.click();
+            }}
+            className={`border-4 border-dashed border-black p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center ${
+              dragActive
+                ? "bg-pink-light/30"
+                : "bg-white hover:bg-pink-light/10"
+            }`}
+          >
+            <input
+              type="file"
+              id={`file-input-${index}`}
+              ref={fileInputRef}
+              onChange={(e) =>
+                e.target.files?.[0] && onFileChange(e.target.files[0])
+              }
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              className="hidden"
+            />
+            <div className="w-10 h-10 bg-pink border-2 border-black rounded-none flex items-center justify-center mb-2 shadow-nb-sm">
+              <UploadCloud className="w-5 h-5 text-black" />
+            </div>
+            <p className="text-xs font-black uppercase">
+              Klik atau drop file di sini
+            </p>
+            <p className="text-[10px] font-bold text-black/60 mt-1">
+              JPG, PNG, atau PDF - Max 5MB
+            </p>
+          </div>
+        )}
+      </div>
     </NbCard>
   );
 }

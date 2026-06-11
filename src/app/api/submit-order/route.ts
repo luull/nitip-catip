@@ -62,10 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const feeJastip = feeSettings[orderData.sizeOrder] || 10000;
     const flatOngkir = body.estimasiOngkir || 20000;
-    const totalPembayaran =
-      orderData.hargaBarang * orderData.jumlah + feeJastip + flatOngkir;
 
     // 3. Auto-generate Order ID: NC-YYYYMMDD-NNN
     const datePrefix = getFormattedDate();
@@ -107,57 +104,79 @@ export async function POST(request: NextRequest) {
       .replace("T", " ")
       .substring(0, 19);
 
-    // 4. Prepare payload for Google Sheet
-    const payload = {
-      orderId,
-      timestamp: timestampStr,
-      namaPemesan: orderData.namaPemesan,
-      whatsapp: orderData.whatsapp,
-      email: orderData.email,
-      namaBarang: orderData.namaBarang,
-      linkProduk: orderData.linkProduk || "",
-      ukuranVarian: orderData.ukuranVarian || "",
-      warna: orderData.warna || "",
-      jumlah: orderData.jumlah,
-      hargaBarang: orderData.hargaBarang,
-      sizeOrder: orderData.sizeOrder,
-      feeJastip,
-      estimasiOngkir: flatOngkir,
-      totalPembayaran,
-      kotaTujuan: orderData.kotaTujuan,
-      kodePos: orderData.kodePos,
-      catatan: orderData.catatan || "",
-      lampiranUrl: orderData.lampiranUrl || "",
-      pembayaran: orderData.pembayaran || "",
-    };
+    // 4. Send one row per item to Google Sheets
+    let totalAllItems = 0;
 
-    // 5. Send POST request to Google Apps Script
-    const response = await fetch(scriptUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      redirect: "follow",
-    });
+    for (let i = 0; i < orderData.items.length; i++) {
+      const item = orderData.items[i];
+      const feeJastip = feeSettings[item.sizeOrder] || 10000;
+      const itemSubtotal = item.hargaBarang * item.jumlah;
+      // Distribute ongkir proportionally across items
+      const itemOngkir =
+        orderData.items.length > 0
+          ? Math.round(flatOngkir / orderData.items.length)
+          : flatOngkir;
+      const totalPembayaran = itemSubtotal + feeJastip + itemOngkir;
+      totalAllItems += totalPembayaran;
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error(
-        "Google Apps Script response error:",
-        response.status,
-        text,
-      );
-      throw new Error(`Google Apps Script returned status ${response.status}`);
+      const itemOrderId =
+        orderData.items.length > 1
+          ? `${orderId}-${String(i + 1).padStart(2, "0")}`
+          : orderId;
+
+      const payload = {
+        orderId: itemOrderId,
+        timestamp: timestampStr,
+        namaPemesan: orderData.namaPemesan,
+        whatsapp: orderData.whatsapp,
+        email: orderData.email,
+        namaBarang: item.namaBarang,
+        linkProduk: item.linkProduk || "",
+        ukuranVarian: item.ukuranVarian || "",
+        warna: item.warna || "",
+        jumlah: item.jumlah,
+        hargaBarang: item.hargaBarang,
+        sizeOrder: item.sizeOrder,
+        feeJastip,
+        estimasiOngkir: itemOngkir,
+        totalPembayaran,
+        kotaTujuan: orderData.kotaTujuan,
+        kodePos: orderData.kodePos,
+        catatan: orderData.catatan || "",
+        lampiranUrl: item.lampiranUrl || "",
+        lampiranName: item.lampiranName || "",
+        pembayaran: orderData.pembayaran || "",
+      };
+
+      // Send POST request to Google Apps Script
+      const response = await fetch(scriptUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        redirect: "follow",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(
+          "Google Apps Script response error:",
+          response.status,
+          text,
+        );
+        throw new Error(
+          `Google Apps Script returned status ${response.status}`,
+        );
+      }
     }
-
-    const result = await response.json();
 
     return NextResponse.json({
       success: true,
       message: "Pesanan berhasil dikirim ke Google Sheet.",
       orderId,
-      data: result,
+      totalItems: orderData.items.length,
+      totalPembayaran: totalAllItems,
     });
   } catch (error: any) {
     console.error("Error in submit-order API Route:", error);

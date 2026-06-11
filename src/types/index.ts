@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+export const productItemSchema = z.object({
+  namaBarang: z.string().min(1, "Nama produk wajib diisi"),
+  linkProduk: z
+    .string()
+    .url("Format link produk tidak valid")
+    .or(z.literal(""))
+    .optional(),
+  ukuranVarian: z.string().optional(),
+  warna: z.string().optional(),
+  jumlah: z.coerce.number().min(1, "Jumlah minimal 1"),
+  hargaBarang: z.coerce.number().min(0, "Harga barang tidak boleh negatif"),
+  sizeOrder: z.enum(
+    ["small", "medium", "large"] as const,
+    "Pilih ukuran order terlebih dahulu",
+  ),
+  lampiranUrl: z.string().optional(),
+  lampiranName: z.string().optional(),
+});
+
+export type ProductItem = z.infer<typeof productItemSchema>;
+
 export const orderFormSchema = z.object({
   // Informasi Pembeli
   namaPemesan: z.string().min(1, "Nama lengkap wajib diisi"),
@@ -19,27 +40,11 @@ export const orderFormSchema = z.object({
     .min(1, "Kode pos wajib diisi")
     .regex(/^[0-9]+$/, "Kode pos hanya boleh berisi angka"),
 
-  // Informasi Produk
-  namaBarang: z.string().min(1, "Nama produk wajib diisi"),
-  linkProduk: z
-    .string()
-    .url("Format link produk tidak valid")
-    .or(z.literal(""))
-    .optional(),
-  ukuranVarian: z.string().optional(),
-  warna: z.string().optional(),
-  jumlah: z.number().min(1, "Jumlah minimal 1"),
-  hargaBarang: z.number().min(0, "Harga barang tidak boleh negatif"),
-  sizeOrder: z.enum(
-    ["small", "medium", "large"] as const,
-    "Pilih ukuran order terlebih dahulu",
-  ),
-  catatan: z.string().optional(),
+  // Products array
+  items: z.array(productItemSchema).min(1, "Minimal 1 produk harus ditambahkan"),
 
-  // File Upload (Mock image base64/url for rendering or listing)
-  lampiranUrl: z.string().optional(),
-  lampiranName: z.string().optional(),
-  pembayaran: z.string().min(1, "Jenis Pembayaran wajib diisi"),
+  // General
+  catatan: z.string().optional(),
 });
 
 export type OrderFormData = z.infer<typeof orderFormSchema>;
@@ -65,7 +70,7 @@ export interface OpenTrip {
   bannerUrl: string;
 }
 
-export interface Order extends OrderFormData {
+export interface Order {
   id: string;
   timestamp: string;
   status:
@@ -75,10 +80,26 @@ export interface Order extends OrderFormData {
     | "Shipped"
     | "Completed"
     | "Cancelled";
+  namaPemesan: string;
+  whatsapp: string;
+  email: string;
+  kotaTujuan: string;
+  kodePos: string;
+  // Flat product fields (from Google Sheet rows)
+  namaBarang: string;
+  linkProduk?: string;
+  ukuranVarian?: string;
+  warna?: string;
+  jumlah: number;
+  hargaBarang: number;
+  sizeOrder: string;
+  catatan?: string;
+  lampiranUrl?: string;
+  lampiranName?: string;
+  pembayaran: string;
   feeJastip: number;
   estimasiOngkir: number;
   totalPembayaran: number;
-  pembayaran: string;
 }
 
 export interface FeeSettings {

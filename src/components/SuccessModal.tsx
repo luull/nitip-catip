@@ -21,8 +21,12 @@ export default function SuccessModal({
 
   const adminNumber =
     process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281586298430";
-  const totalPrice =
-    orderData.hargaBarang * orderData.jumlah + feeJastip + flatOngkir;
+
+  const totalSubtotal = orderData.items.reduce(
+    (sum, item) => sum + item.hargaBarang * item.jumlah,
+    0,
+  );
+  const totalPrice = totalSubtotal + feeJastip + flatOngkir;
 
   // Format currency helper
   const formatIDR = (value: number) => {
@@ -36,6 +40,20 @@ export default function SuccessModal({
 
   // Generate WhatsApp pre-filled message
   const generateWAMessage = () => {
+    let itemsText = orderData.items
+      .map(
+        (item, i) =>
+          `
+*Produk #${i + 1}:*
+- Nama Barang: ${item.namaBarang}
+- Varian/Ukuran: ${item.ukuranVarian || "-"}
+- Warna: ${item.warna || "-"}
+- Jumlah: ${item.jumlah} pcs
+- Harga Satuan: ${formatIDR(item.hargaBarang)}
+- Size Order: ${item.sizeOrder.toUpperCase()}`,
+      )
+      .join("\n");
+
     const text = `Halo Kak Admin Nitipcatip! ★ Saya mau konfirmasi pesanan jastip:
 
 *Data Pemesan:*
@@ -43,23 +61,19 @@ export default function SuccessModal({
 - WhatsApp: ${orderData.whatsapp}
 - Kota Tujuan: ${orderData.kotaTujuan} (${orderData.kodePos})
 
-*Detail Barang:*
-- Nama Barang: ${orderData.namaBarang}
-- Varian/Ukuran: ${orderData.ukuranVarian || "-"}
-- Warna: ${orderData.warna || "-"}
-- Jumlah: ${orderData.jumlah} pcs
-- Harga Satuan: ${formatIDR(orderData.hargaBarang)}
-- Size Order: ${orderData.sizeOrder.toUpperCase()}
-- Fee Jastip: ${formatIDR(feeJastip)}
-- Ongkir JNE: ${formatIDR(flatOngkir)}
-- *Total Bayar: ${formatIDR(totalPrice)}*
-${orderData.linkProduk ? `\n*Link Produk:* ${orderData.linkProduk}` : ""}
+${itemsText}
+
+*Total Fee Jastip: ${formatIDR(feeJastip)}*
+*Ongkir: ${formatIDR(flatOngkir)}*
+*Total Bayar: ${formatIDR(totalPrice)}*
 ${orderData.catatan ? `\n*Catatan:* ${orderData.catatan}` : ""}
 
 Apakah pesanan saya sudah terdata di sistem? Terima kasih!`;
 
     return `https://wa.me/${adminNumber}?text=${encodeURIComponent(text)}`;
   };
+
+  const totalQty = orderData.items.reduce((s, i) => s + i.jumlah, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans">
@@ -99,18 +113,20 @@ Apakah pesanan saya sudah terdata di sistem? Terima kasih!`;
               <span className="text-black/60">Nama Pemesan</span>
               <span className="text-black">{orderData.namaPemesan}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-black/60">Barang</span>
-              <span className="text-black text-right max-w-[200px] truncate">
-                {orderData.namaBarang} ({orderData.jumlah}x)
-              </span>
+
+            <div className="border-t border-black/20 pt-2 space-y-2">
+              {orderData.items.map((item, idx) => (
+                <div key={idx} className="flex justify-between">
+                  <span className="text-black/60 truncate pr-2">
+                    #{idx + 1} {item.namaBarang}
+                  </span>
+                  <span className="text-black text-right flex-shrink-0">
+                    {item.jumlah}x · {item.sizeOrder.toUpperCase()}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between">
-              <span className="text-black/60">Size Order</span>
-              <span className="text-black uppercase">
-                {orderData.sizeOrder}
-              </span>
-            </div>
+
             <div className="flex justify-between border-t-2 border-black pt-3 mt-1 text-base font-black">
               <span>TOTAL ESTIMASI</span>
               <span className="text-black">{formatIDR(totalPrice)}</span>
