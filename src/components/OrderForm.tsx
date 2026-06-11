@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Swal from "sweetalert2";
 import {
   Box,
   User,
@@ -177,7 +178,12 @@ export default function OrderForm({
 
   const handleFileChange = (index: number, file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      alert("Ukuran file tidak boleh melebihi 5MB.");
+      Swal.fire({
+        icon: "warning",
+        title: "File terlalu besar",
+        text: "Ukuran file tidak boleh melebihi 5MB.",
+        confirmButtonColor: "#FF69B4",
+      });
       return;
     }
 
@@ -273,7 +279,9 @@ export default function OrderForm({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Gagal mengirim pesanan");
+        const err = new Error(result.error || "Gagal mengirim pesanan") as any;
+        err.details = result.details;
+        throw err;
       }
 
       setIsPreviewOpen(false);
@@ -284,9 +292,30 @@ export default function OrderForm({
       setFileNames({});
       onClearSelection();
     } catch (error: any) {
-      alert(
-        `Error: ${error.message || "Terjadi kesalahan saat mengirim pesanan."}`,
-      );
+      const errMessage = error.message || "Terjadi kesalahan saat mengirim pesanan.";
+      // Try to parse BE validation details if available
+      let detailsHtml = "";
+      if (error.details) {
+        if (typeof error.details === "object") {
+          const lines = Object.entries(error.details)
+            .map(([key, val]) => {
+              const valStr = Array.isArray(val) ? val.join(", ") : String(val);
+              return `<li><strong>${key}:</strong> ${valStr}</li>`;
+            })
+            .join("");
+          detailsHtml = `<ul class="text-left text-sm mt-2 space-y-1">${lines}</ul>`;
+        } else {
+          detailsHtml = `<p class="text-sm mt-2">${String(error.details)}</p>`;
+        }
+      }
+
+      Swal.fire({
+        icon: "error",
+        title: "Oops! Gagal mengirim pesanan",
+        html: `<p class="text-sm">${errMessage}</p>${detailsHtml}`,
+        confirmButtonText: "OK, Mengerti",
+        confirmButtonColor: "#FF69B4",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -675,6 +704,10 @@ export default function OrderForm({
 
         {/* Shopee CTA */}
         {shippingMethod === "shopee" && (
+          <>
+             <p className="text-xs font-bold text-black/70">
+            ℹ️ Pengiriman Shopee dilakukan H+2 setelah barang dibeli.
+          </p>
           <button
             type="button"
             onClick={() =>
@@ -688,6 +721,7 @@ export default function OrderForm({
           >
             Bayar Ongkir via Shopee →
           </button>
+          </>
         )}
 
         {/* COD / Gosend CTA */}
