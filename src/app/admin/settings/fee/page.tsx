@@ -7,9 +7,11 @@ import NbInput from "@/components/ui/NbInput";
 import NbBadge from "@/components/ui/NbBadge";
 
 export default function FeeSettingsPage() {
-  const [smallFee, setSmallFee] = useState(10000);
-  const [mediumFee, setMediumFee] = useState(20000);
-  const [largeFee, setLargeFee] = useState(35000);
+  const [smallFee, setSmallFee] = useState(3000);
+  const [mediumFee, setMediumFee] = useState(5000);
+  const [large10Fee, setLarge10Fee] = useState(10000);
+  const [large15Fee, setLarge15Fee] = useState(15000);
+  const [large20Fee, setLarge20Fee] = useState(20000);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,9 +26,11 @@ export default function FeeSettingsPage() {
         if (res.ok) {
           const data = await res.json();
           if (data) {
-            setSmallFee(data.small || 10000);
-            setMediumFee(data.medium || 20000);
-            setLargeFee(data.large || 35000);
+            setSmallFee(data.small ?? 3000);
+            setMediumFee(data.medium ?? 5000);
+            setLarge10Fee(data.large_10 ?? 10000);
+            setLarge15Fee(data.large_15 ?? 15000);
+            setLarge20Fee(data.large_20 ?? 20000);
           }
         }
       } catch (err) {
@@ -53,7 +57,9 @@ export default function FeeSettingsPage() {
         body: JSON.stringify({
           small: smallFee,
           medium: mediumFee,
-          large: largeFee
+          large_10: large10Fee,
+          large_15: large15Fee,
+          large_20: large20Fee,
         })
       });
 
@@ -85,8 +91,8 @@ export default function FeeSettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto font-sans text-black space-y-6">
-      
+    <div className="max-w-4xl mx-auto font-sans text-black space-y-6">
+
       {/* Header section */}
       <div className="border-b-4 border-black pb-6">
         <h1 className="text-3xl sm:text-5xl font-black uppercase tracking-wider">
@@ -111,9 +117,9 @@ export default function FeeSettingsPage() {
 
       {/* Main Settings Form */}
       <form onSubmit={handleSave} className="space-y-6">
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Small Fee Settings Card */}
+
+        {/* Small & Medium row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <NbCard variant="white" className="p-5 border-4 border-black shadow-nb flex flex-col justify-between space-y-4">
             <div>
               <NbBadge variant="pink" className="mb-2">SMALL SIZE</NbBadge>
@@ -121,7 +127,6 @@ export default function FeeSettingsPage() {
                 Accessories, Makeup, Small Items
               </p>
             </div>
-            
             <NbInput
               label="Tarif Jastip (Rp)"
               type="number"
@@ -131,7 +136,6 @@ export default function FeeSettingsPage() {
             />
           </NbCard>
 
-          {/* Medium Fee Settings Card */}
           <NbCard variant="white" className="p-5 border-4 border-black shadow-nb flex flex-col justify-between space-y-4">
             <div>
               <NbBadge variant="green" className="mb-2">MEDIUM SIZE</NbBadge>
@@ -139,7 +143,6 @@ export default function FeeSettingsPage() {
                 Clothes, Small Bags
               </p>
             </div>
-            
             <NbInput
               label="Tarif Jastip (Rp)"
               type="number"
@@ -148,24 +151,60 @@ export default function FeeSettingsPage() {
               onChange={(e) => setMediumFee(Number(e.target.value))}
             />
           </NbCard>
+        </div>
 
-          {/* Large Fee Settings Card */}
-          <NbCard variant="white" className="p-5 border-4 border-black shadow-nb flex flex-col justify-between space-y-4">
-            <div>
-              <NbBadge variant="yellow" className="mb-2">LARGE SIZE</NbBadge>
-              <p className="text-xs font-bold text-black/70 mt-1">
-                Shoes, Large Bags, Bulky Items
-              </p>
-            </div>
-            
-            <NbInput
-              label="Tarif Jastip (Rp)"
-              type="number"
-              min="0"
-              value={largeFee}
-              onChange={(e) => setLargeFee(Number(e.target.value))}
-            />
-          </NbCard>
+        {/* Large tiers */}
+        <div>
+          <h3 className="font-black text-sm uppercase tracking-wider text-black/60 mb-3">LARGE SIZE (3 Tier)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <NbCard variant="white" className="p-5 border-4 border-black shadow-nb flex flex-col justify-between space-y-4">
+              <div>
+                <NbBadge variant="yellow" className="mb-2">LARGE 10K</NbBadge>
+                <p className="text-xs font-bold text-black/70 mt-1">
+                  Shoes, Bags
+                </p>
+              </div>
+              <NbInput
+                label="Tarif Jastip (Rp)"
+                type="number"
+                min="0"
+                value={large10Fee}
+                onChange={(e) => setLarge10Fee(Number(e.target.value))}
+              />
+            </NbCard>
+
+            <NbCard variant="white" className="p-5 border-4 border-black shadow-nb flex flex-col justify-between space-y-4">
+              <div>
+                <NbBadge variant="yellow" className="mb-2">LARGE 15K</NbBadge>
+                <p className="text-xs font-bold text-black/70 mt-1">
+                  Bulky Items
+                </p>
+              </div>
+              <NbInput
+                label="Tarif Jastip (Rp)"
+                type="number"
+                min="0"
+                value={large15Fee}
+                onChange={(e) => setLarge15Fee(Number(e.target.value))}
+              />
+            </NbCard>
+
+            <NbCard variant="white" className="p-5 border-4 border-black shadow-nb flex flex-col justify-between space-y-4">
+              <div>
+                <NbBadge variant="yellow" className="mb-2">LARGE 20K</NbBadge>
+                <p className="text-xs font-bold text-black/70 mt-1">
+                  Extra Bulky
+                </p>
+              </div>
+              <NbInput
+                label="Tarif Jastip (Rp)"
+                type="number"
+                min="0"
+                value={large20Fee}
+                onChange={(e) => setLarge20Fee(Number(e.target.value))}
+              />
+            </NbCard>
+          </div>
         </div>
 
         {/* Warning Notes */}

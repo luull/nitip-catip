@@ -4,7 +4,7 @@ import OrderForm from "@/components/OrderForm";
 import NbBadge from "@/components/ui/NbBadge";
 import NbButton from "@/components/ui/NbButton";
 import { CatalogItem, OpenTrip } from "@/types";
-import { CheckCircle, ShieldCheck, Users } from "lucide-react";
+import { CheckCircle, ShieldCheck, Users, MessageCircle } from "lucide-react";
 import { useRef, useState } from "react";
 
 export default function Home() {
@@ -45,6 +45,15 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-8 text-sm sm:text-base font-black uppercase tracking-wider">
             <a href="#about" className="hover:text-pink transition-colors">
               Cara Kerja
+            </a>
+            <a
+              href="https://chat.whatsapp.com/GR91ffPlxPuI1jfG3ABrup?mode=gi_t"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-green transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Grup WA
             </a>
           </nav>
 
@@ -222,13 +231,23 @@ export default function Home() {
                   Cara Kerja
                 </a>
               </li>
-
               <li>
                 <a
                   href="#request-form"
                   className="hover:text-pink transition-colors"
                 >
                   Form Pemesanan
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://chat.whatsapp.com/GR91ffPlxPuI1jfG3ABrup?mode=gi_t"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-green transition-colors flex items-center gap-1"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Grup WhatsApp Jastip
                 </a>
               </li>
             </ul>

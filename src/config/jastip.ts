@@ -1,9 +1,11 @@
 import { CatalogItem, OpenTrip, FeeSettings } from "../types";
 
 export const DEFAULT_FEE_SETTINGS: FeeSettings = {
-  small: 10000,
-  medium: 20000,
-  large: 35000,
+  small: 3000,
+  medium: 5000,
+  large_10: 10000,
+  large_15: 15000,
+  large_20: 20000,
 };
 
 export const ACTIVE_TRIPS: OpenTrip[] = [

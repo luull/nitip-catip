@@ -4,15 +4,14 @@ export const productItemSchema = z.object({
   namaBarang: z.string().min(1, "Nama produk wajib diisi"),
   linkProduk: z
     .string()
-    .url("Format link produk tidak valid")
-    .or(z.literal(""))
-    .optional(),
+    .min(1, "Link produk wajib diisi")
+    .url("Format link produk tidak valid"),
   ukuranVarian: z.string().optional(),
   warna: z.string().optional(),
   jumlah: z.number().min(1, "Jumlah minimal 1"),
   hargaBarang: z.number().min(0, "Harga barang tidak boleh negatif"),
   sizeOrder: z.enum(
-    ["small", "medium", "large"] as const,
+    ["small", "medium", "large_10", "large_15", "large_20"] as const,
     "Pilih ukuran order terlebih dahulu",
   ),
   lampiranUrl: z.string().optional(),
@@ -106,5 +105,7 @@ export interface Order {
 export interface FeeSettings {
   small: number;
   medium: number;
-  large: number;
+  large_10: number;
+  large_15: number;
+  large_20: number;
 }

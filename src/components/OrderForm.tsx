@@ -44,6 +44,9 @@ const EMPTY_ITEM = {
   lampiranName: "",
 };
 
+const WA_ADMIN_NUMBER = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281809010906";
+const WA_GROUP_LINK = "https://chat.whatsapp.com/GR91ffPlxPuI1jfG3ABrup?mode=gi_t"; // placeholder
+
 export default function OrderForm({
   selectedItem,
   selectedTrip,
@@ -58,22 +61,22 @@ export default function OrderForm({
   );
   const handleCopyBank = async (bankCode: string, accountNumber: string) => {
     await navigator.clipboard.writeText(accountNumber);
-
     setCopiedBank(bankCode);
-
-    setTimeout(() => {
-      setCopiedBank("");
-    }, 2000);
+    setTimeout(() => setCopiedBank(""), 2000);
   };
+  const [paymentMethod, setPaymentMethod] = useState("qris");
+  const [selectedBank, setSelectedBank] = useState("");
   // Dynamic fee settings state
   const [feeSettings, setFeeSettings] =
     useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
 
-  // Flat Shipping Fee
+  // Flat Shipping Fee (not used for calculation anymore, shipping is separate)
   const deliveryPriceMap = {
     small: 5000,
     medium: 10000,
-    large: 20000,
+    large_10: 20000,
+    large_15: 20000,
+    large_20: 20000,
   };
 
   const {
@@ -114,7 +117,7 @@ export default function OrderForm({
         const res = await fetch("/api/admin/fee-settings");
         if (res.ok) {
           const data = await res.json();
-          if (data && data.small && data.medium && data.large) {
+          if (data && data.small !== undefined && data.medium !== undefined) {
             setFeeSettings(data);
           }
         }
@@ -127,8 +130,7 @@ export default function OrderForm({
 
   // Watch all items for calculations
   const watchItems = watch("items");
-  const [paymentMethod, setPaymentMethod] = useState("qris");
-  const [selectedBank, setSelectedBank] = useState("");
+  const [shippingMethod, setShippingMethod] = useState("");
 
   // Calculate totals across all items
   const totalSubtotal = (watchItems || []).reduce(
@@ -136,7 +138,7 @@ export default function OrderForm({
     0,
   );
   const totalFeeJastip = (watchItems || []).reduce(
-    (sum, item) => sum + (feeSettings[item?.sizeOrder || "small"] || 10000),
+    (sum, item) => sum + (feeSettings[item?.sizeOrder || "small"] || 3000),
     0,
   );
   const totalDelivery = (watchItems || []).reduce(
@@ -591,7 +593,7 @@ export default function OrderForm({
         <div className="border-t-4 border-black pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left bg-white border-4 border-black px-4 py-2 shadow-nb-sm">
             <span className="text-xs font-black uppercase text-black/60 block">
-              Estimasi Ongkir
+              Estimasi Jastip
             </span>
             <span className="text-2xl font-black text-black">
               {formatIDR(grandTotal)}
@@ -610,35 +612,105 @@ export default function OrderForm({
       </form>
       <NbCard
         variant="white"
-        className="p-5 mt-3 border-4 border-black space-y-3"
+        className="p-5 mt-3 border-4 border-black space-y-4"
       >
         <div>
           <h4 className="font-black text-lg uppercase">
-            🚚 Pembayaran Ongkir
+            🚚 Pengiriman Barang
           </h4>
-
-          <p className="text-sm font-bold mt-2">
-            Ongkir dibayarkan terpisah melalui Shopee setelah proses jastip
-            selesai
+          <p className="text-sm font-bold mt-2 text-black/70">
+            Pilih metode pengiriman setelah proses jastip selesai.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            window.open(
-              "https://shopee.co.id/jastip-by-nitipcatip.id-i.268110076.57161747094?extraParams=%7B%22display_model_id%22%3A446024607810%2C%22model_selection_logic%22%3A2%7D",
-              "_blank",
-              "noopener,noreferrer",
-            )
-          }
-          className="w-full border-4 border-black bg-orange-300 px-4 py-3 font-black uppercase shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb transition-all"
-        >
-          Bayar Ongkir via Shopee →
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Shopee Checkout */}
+          <button
+            type="button"
+            onClick={() => setShippingMethod("shopee")}
+            className={`border-4 border-black p-4 text-left cursor-pointer transition-all ${
+              shippingMethod === "shopee"
+                ? "bg-orange-300 shadow-none translate-x-[2px] translate-y-[2px]"
+                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+            }`}
+          >
+            <h4 className="font-black text-sm uppercase">🛒 Checkout via Shopee</h4>
+            <p className="text-xs font-bold mt-1 text-black/70">
+              + Packaging rapih
+            </p>
+          </button>
+
+          {/* COD */}
+          <button
+            type="button"
+            onClick={() => setShippingMethod("cod")}
+            className={`border-4 border-black p-4 text-left cursor-pointer transition-all ${
+              shippingMethod === "cod"
+                ? "bg-green-light shadow-none translate-x-[2px] translate-y-[2px]"
+                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+            }`}
+          >
+            <h4 className="font-black text-sm uppercase">💵 Cash on Delivery</h4>
+            <p className="text-xs font-bold mt-1 text-black/70">
+              Konfirmasi via WA
+            </p>
+          </button>
+
+          {/* Gosend/Grab */}
+          <button
+            type="button"
+            onClick={() => setShippingMethod("gosend")}
+            className={`border-4 border-black p-4 text-left cursor-pointer transition-all ${
+              shippingMethod === "gosend"
+                ? "bg-pink-light shadow-none translate-x-[2px] translate-y-[2px]"
+                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+            }`}
+          >
+            <h4 className="font-black text-sm uppercase">⚡ Gosend / Grab Instant</h4>
+            <p className="text-xs font-bold mt-1 text-black/70">
+              Konfirmasi via WA
+            </p>
+          </button>
+        </div>
+
+        {/* Shopee CTA */}
+        {shippingMethod === "shopee" && (
+          <button
+            type="button"
+            onClick={() =>
+              window.open(
+                "https://shopee.co.id/jastip-by-nitipcatip.id-i.268110076.57161747094?extraParams=%7B%22display_model_id%22%3A446024607810%2C%22model_selection_logic%22%3A2%7D",
+                "_blank",
+                "noopener,noreferrer",
+              )
+            }
+            className="w-full border-4 border-black bg-orange-300 px-4 py-3 font-black uppercase shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb transition-all"
+          >
+            Bayar Ongkir via Shopee →
+          </button>
+        )}
+
+        {/* COD / Gosend CTA */}
+        {(shippingMethod === "cod" || shippingMethod === "gosend") && (
+          <button
+            type="button"
+            onClick={() =>
+              window.open(
+                `https://wa.me/${WA_ADMIN_NUMBER.replace(/\D/g, "")}?text=${encodeURIComponent(
+                  `Halo Admin, saya mau konfirmasi pengiriman via ${shippingMethod === "cod" ? "Cash on Delivery" : "Gosend/Grab Instant"}. Mohon infonya ya!`,
+                )}`,
+                "_blank",
+                "noopener,noreferrer",
+              )
+            }
+            className="w-full border-4 border-black bg-green px-4 py-3 font-black uppercase shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb transition-all flex items-center justify-center gap-2"
+          >
+            Konfirmasi via WhatsApp Admin →
+          </button>
+        )}
 
         <div className="border-t-2 border-black pt-3">
-          <p className="text-xs font-bold">
+          <p className="text-xs font-bold text-black/70">
             ⚠️ Setelah pembayaran ongkir selesai, simpan bukti pembayaran dan
             lanjutkan proses konfirmasi kepada admin.
           </p>
@@ -747,7 +819,8 @@ function ProductItemCard({
 
       {/* Link Barang */}
       <NbInput
-        label="Link Produk (Opsional)"
+        label="Link Produk"
+        requiredMark
         {...register(`items.${index}.linkProduk`)}
         placeholder="https://www.gentlewomanonline.com/..."
         error={itemError?.linkProduk?.message}
@@ -773,9 +846,13 @@ function ProductItemCard({
       <div className="space-y-2">
         <label className="block text-black font-black text-sm md:text-base uppercase tracking-wider">
           Size Order <span className="text-pink">★</span>
+          <span className="text-xs font-bold text-black/60 block mt-0.5 normal-case">
+            *Konfirmasi fee melalui chat admin
+          </span>
         </label>
 
-        <div className="grid grid-cols-3 gap-3">
+        {/* Small & Medium row */}
+        <div className="grid grid-cols-2 gap-3">
           {/* Small */}
           <div
             onClick={() => setValue(`items.${index}.sizeOrder`, "small")}
@@ -815,25 +892,35 @@ function ProductItemCard({
               {formatIDR(feeSettings.medium)}
             </span>
           </div>
+        </div>
 
-          {/* Large */}
-          <div
-            onClick={() => setValue(`items.${index}.sizeOrder`, "large")}
-            className={`border-4 border-black p-3 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
-              watchSizeOrder === "large"
-                ? "bg-amber-300 shadow-none translate-x-[2px] translate-y-[2px]"
-                : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
-            }`}
-          >
-            <div>
-              <h4 className="font-black text-sm uppercase">Large</h4>
-              <p className="text-[10px] font-bold mt-1 text-black/80">
-                Shoes, Large Bags
-              </p>
-            </div>
-            <span className="font-black text-xs mt-2 block border-t-2 border-black pt-1">
-              {formatIDR(feeSettings.large)}
-            </span>
+        {/* Large sub-tiers row */}
+        <div>
+          <span className="text-xs font-black uppercase text-black/60 block mb-2">Large (pilih tier):</span>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { key: "large_10", label: "Large 10K", desc: "Shoes, Bags", fee: feeSettings.large_10, color: "bg-amber-200" },
+              { key: "large_15", label: "Large 15K", desc: "Bulky Items", fee: feeSettings.large_15, color: "bg-amber-300" },
+              { key: "large_20", label: "Large 20K", desc: "Extra Bulky", fee: feeSettings.large_20, color: "bg-amber-400" },
+            ].map((tier) => (
+              <div
+                key={tier.key}
+                onClick={() => setValue(`items.${index}.sizeOrder`, tier.key)}
+                className={`border-4 border-black p-2 cursor-pointer transition-all duration-100 flex flex-col justify-between ${
+                  watchSizeOrder === tier.key
+                    ? `${tier.color} shadow-none translate-x-[2px] translate-y-[2px]`
+                    : "bg-white shadow-nb-sm hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-nb"
+                }`}
+              >
+                <div>
+                  <h4 className="font-black text-xs uppercase">{tier.label}</h4>
+                  <p className="text-[9px] font-bold mt-0.5 text-black/80">{tier.desc}</p>
+                </div>
+                <span className="font-black text-[11px] mt-1 block border-t-2 border-black pt-1">
+                  {formatIDR(tier.fee)}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
         {itemError?.sizeOrder && (

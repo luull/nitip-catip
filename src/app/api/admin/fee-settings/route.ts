@@ -28,16 +28,19 @@ export async function POST(request: NextRequest) {
     // Simple validation
     const small = Number(body.small);
     const medium = Number(body.medium);
-    const large = Number(body.large);
+    const large_10 = Number(body.large_10);
+    const large_15 = Number(body.large_15);
+    const large_20 = Number(body.large_20);
 
-    if (isNaN(small) || isNaN(medium) || isNaN(large) || small < 0 || medium < 0 || large < 0) {
+    if (isNaN(small) || isNaN(medium) || isNaN(large_10) || isNaN(large_15) || isNaN(large_20) ||
+        small < 0 || medium < 0 || large_10 < 0 || large_15 < 0 || large_20 < 0) {
       return NextResponse.json(
         { success: false, error: "Nilai fee tidak valid" },
         { status: 400 }
       );
     }
 
-    const newSettings = { small, medium, large };
+    const newSettings = { small, medium, large_10, large_15, large_20 };
 
     // Ensure directory exists
     const dir = path.dirname(filePath);
