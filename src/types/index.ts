@@ -9,8 +9,8 @@ export const productItemSchema = z.object({
     .optional(),
   ukuranVarian: z.string().optional(),
   warna: z.string().optional(),
-  jumlah: z.coerce.number().min(1, "Jumlah minimal 1"),
-  hargaBarang: z.coerce.number().min(0, "Harga barang tidak boleh negatif"),
+  jumlah: z.number().min(1, "Jumlah minimal 1"),
+  hargaBarang: z.number().min(0, "Harga barang tidak boleh negatif"),
   sizeOrder: z.enum(
     ["small", "medium", "large"] as const,
     "Pilih ukuran order terlebih dahulu",
@@ -45,6 +45,7 @@ export const orderFormSchema = z.object({
 
   // General
   catatan: z.string().optional(),
+  pembayaran: z.string().optional(),
 });
 
 export type OrderFormData = z.infer<typeof orderFormSchema>;

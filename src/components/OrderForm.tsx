@@ -876,12 +876,13 @@ function ProductItemCard({
             </label>
             <input
               type="text"
-              {...register(`items.${index}.hargaBarang`)}
+              {...register(`items.${index}.hargaBarang`, {
+                setValueAs: (v: string) => Number((v || "").replace(/\D/g, "") || 0),
+              })}
               onInput={(e) => {
                 const target = e.target as HTMLInputElement;
                 const value = target.value.replace(/\D/g, "");
                 target.value = Number(value || 0).toLocaleString("id-ID");
-                setValue(`items.${index}.hargaBarang`, Number(value || 0));
               }}
               className="w-full p-2 bg-white border-2 border-black font-black text-black text-sm focus:outline-none"
             />
