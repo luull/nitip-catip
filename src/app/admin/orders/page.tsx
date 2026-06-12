@@ -10,6 +10,8 @@ import {
   ChevronUp,
   Truck,
   Package,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import NbCard from "@/components/ui/NbCard";
 import NbBadge from "@/components/ui/NbBadge";
@@ -48,6 +50,7 @@ export default function AdminOrders() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [dataSource, setDataSource] = useState<"supabase" | "sheets" | "none">("none");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   async function loadOrders() {
     setIsLoading(true);
@@ -296,9 +299,29 @@ export default function AdminOrders() {
                   {/* Item list */}
                   <div className="space-y-2">
                     {(isExpanded && hasMultipleItems ? order.items : order.items?.slice(0, 1) || []).map((item: any, idx: number) => (
-                      <div key={item.id || idx} className="flex items-center justify-between bg-white border-2 border-black p-3 text-sm">
+                      <div key={item.id || idx} className="flex items-start gap-3 bg-white border-2 border-black p-3 text-sm">
+                        {/* Thumbnail */}
+                        {item.lampiran_url ? (
+                          <button
+                            onClick={() => setPreviewImage(item.lampiran_url)}
+                            className="shrink-0 w-14 h-14 border-2 border-black bg-white overflow-hidden hover:opacity-80 transition-opacity relative group"
+                          >
+                            <img
+                              src={item.lampiran_url}
+                              alt={item.nama_barang}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <ZoomIn className="w-4 h-4 text-white stroke-[2.5]" />
+                            </div>
+                          </button>
+                        ) : (
+                          <div className="shrink-0 w-14 h-14 border-2 border-black bg-white flex items-center justify-center">
+                            <Package className="w-4 h-4 text-black/30" />
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <Package className="w-4 h-4 text-black/40 shrink-0" />
                           <div className="min-w-0">
                             <p className="font-black truncate">{item.nama_barang}</p>
                             <p className="text-xs text-black/60">
@@ -340,6 +363,27 @@ export default function AdminOrders() {
               </NbCard>
             );
           })}
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 p-2 bg-white border-4 border-black shadow-nb hover:bg-pink-light transition-colors z-10"
+          >
+            <X className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-w-full max-h-[85vh] object-contain border-4 border-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

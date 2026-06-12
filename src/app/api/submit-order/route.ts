@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         orderData.items.length > 0
           ? Math.round(flatOngkir / orderData.items.length)
           : flatOngkir;
-      const totalPembayaran = itemSubtotal + feeJastip + itemOngkir;
+      const totalPembayaran = itemSubtotal + feeJastip;
       totalAllItems += totalPembayaran;
 
       const itemOrderId =
@@ -243,7 +243,7 @@ async function saveToSupabase(
       (sum: number, item: any) => sum + (feeSettings[item.sizeOrder] || 3000),
       0,
     );
-    const totalPembayaran = totalHargaBarang + totalFeeJastip + flatOngkir;
+    const totalPembayaran = totalHargaBarang + totalFeeJastip;
 
     // 3. Insert order
     const { error: orderErr } = await supabase!.from("orders").insert({

@@ -13,6 +13,8 @@ import {
   ExternalLink,
   MessageSquare,
   ShoppingBag,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { DbOrder } from "@/types";
 import NbButton from "@/components/ui/NbButton";
@@ -70,6 +72,7 @@ function RiwayatContent() {
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Auto-search if whatsapp is in URL
   useEffect(() => {
@@ -240,8 +243,29 @@ function RiwayatContent() {
                     {order.order_items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between bg-pink-light/20 border-2 border-black p-3"
+                        className="flex items-start gap-3 bg-pink-light/20 border-2 border-black p-3"
                       >
+                        {/* Thumbnail */}
+                        {item.lampiran_url ? (
+                          <button
+                            onClick={() => setPreviewImage(item.lampiran_url!)}
+                            className="shrink-0 w-16 h-16 border-2 border-black bg-white overflow-hidden hover:opacity-80 transition-opacity relative group"
+                          >
+                            <img
+                              src={item.lampiran_url}
+                              alt={item.nama_barang}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <ZoomIn className="w-5 h-5 text-white stroke-[2.5]" />
+                            </div>
+                          </button>
+                        ) : (
+                          <div className="shrink-0 w-16 h-16 border-2 border-black bg-white flex items-center justify-center">
+                            <Package className="w-5 h-5 text-black/30" />
+                          </div>
+                        )}
+
                         <div className="flex-1 min-w-0 pr-3">
                           <p className="font-black text-sm truncate">
                             {item.nama_barang}
@@ -325,6 +349,26 @@ function RiwayatContent() {
           <p>&copy; {new Date().getFullYear()} Nitip Catip Jasa Titip</p>
         </div>
       </footer>
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 p-2 bg-white border-4 border-black shadow-nb hover:bg-pink-light transition-colors z-10"
+          >
+            <X className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-w-full max-h-[85vh] object-contain border-4 border-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

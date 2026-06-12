@@ -46,9 +46,7 @@ export default function Home() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm sm:text-base font-black uppercase tracking-wider">
-            <a href="#about" className="hover:text-pink transition-colors">
-              Cara Kerja
-            </a>
+ 
             <a
               href="/cart"
               className="flex items-center gap-1.5 hover:text-pink transition-colors relative"
@@ -248,11 +246,7 @@ export default function Home() {
               Navigasi Halaman
             </h5>
             <ul className="space-y-2 text-sm font-bold">
-              <li>
-                <a href="#about" className="hover:text-pink transition-colors">
-                  Cara Kerja
-                </a>
-              </li>
+           
               <li>
                 <a
                   href="#request-form"
