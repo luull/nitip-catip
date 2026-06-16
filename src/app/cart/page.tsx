@@ -202,7 +202,7 @@ export default function CartPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/order")}
               className="border-2 border-black p-2 bg-white hover:bg-pink-light transition-colors"
             >
               <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
@@ -231,7 +231,7 @@ export default function CartPage() {
             <p className="text-sm font-bold text-black/60 mt-2">
               Belum ada produk di keranjang. Mulai order dan simpan ke keranjang.
             </p>
-            <a href="/">
+            <a href="/order">
               <NbButton variant="pink" className="mt-6">
                 Mulai Order <ArrowRight className="w-4 h-4" />
               </NbButton>

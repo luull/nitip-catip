@@ -74,7 +74,7 @@ export default function AdminLayout({
           >
             <LogOut className="w-4 h-4 stroke-[2.5]" />
           </button>
-          <Link href="/">
+          <Link href="/order">
             <NbButton variant="white" className="py-2 px-4 text-xs sm:text-sm shadow-nb-sm">
               <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
               Lihat Website

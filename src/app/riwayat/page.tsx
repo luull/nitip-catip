@@ -114,7 +114,7 @@ function RiwayatContent() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/order")}
               className="border-2 border-black p-2 bg-white hover:bg-pink-light transition-colors"
             >
               <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
@@ -129,7 +129,7 @@ function RiwayatContent() {
             </div>
           </div>
           <a
-            href="/"
+            href="/order"
             className="flex items-center gap-1.5 text-sm font-black uppercase hover:text-pink transition-colors"
           >
             <ShoppingBag className="w-4 h-4" />
@@ -194,7 +194,7 @@ function RiwayatContent() {
             <p className="text-sm font-bold text-black/60 mt-2">
               Tidak ditemukan pesanan dengan nomor WhatsApp tersebut.
             </p>
-            <a href="/">
+            <a href="/order">
               <NbButton variant="pink" className="mt-6">
                 Mulai Order Sekarang
               </NbButton>
