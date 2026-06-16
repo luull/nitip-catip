@@ -24,7 +24,7 @@ export default function SuccessModal({
   if (!isOpen || !orderData) return null;
 
   const adminNumber =
-    process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6285774140295";
+    process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281809010906";
 
   const totalSubtotal = orderData.items.reduce(
     (sum, item) => sum + item.hargaBarang * item.jumlah,
