@@ -4,7 +4,14 @@ import OrderForm from "@/components/OrderForm";
 import NbBadge from "@/components/ui/NbBadge";
 import NbButton from "@/components/ui/NbButton";
 import { CatalogItem, OpenTrip } from "@/types";
-import { CheckCircle, ShieldCheck, Users, MessageCircle, ShoppingCart, History } from "lucide-react";
+import {
+  CheckCircle,
+  ShieldCheck,
+  Users,
+  MessageCircle,
+  ShoppingCart,
+  History,
+} from "lucide-react";
 import { useRef, useState } from "react";
 
 import { useCart } from "@/context/CartContext";
@@ -33,7 +40,11 @@ export default function OrderPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-25 h-20 overflow-hidden">
-              <img src="/icon-1.png" alt="Nitip Catip" className="w-full h-full object-cover" />
+              <img
+                src="/icon-1.png"
+                alt="Nitip Catip"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               {/* <span className="text-xl sm:text-2xl font-black text-black tracking-tight block">
@@ -46,7 +57,6 @@ export default function OrderPage() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm sm:text-base font-black uppercase tracking-wider">
- 
             <a
               href="/cart"
               className="flex items-center gap-1.5 hover:text-pink transition-colors relative"
@@ -79,11 +89,11 @@ export default function OrderPage() {
 
           <div>
             <NbButton
-              onClick={scrollToForm}
+              onClick={() => (window.location.href = "/riwayat")}
               variant="green"
               className="text-xs sm:text-sm shadow-nb-sm"
             >
-              Request Jastip 🚀
+              Riwayat jastip
             </NbButton>
           </div>
         </div>
@@ -203,7 +213,11 @@ export default function OrderPage() {
           <div className="space-y-4 col-span-1 md:col-span-2">
             <div className="flex items-center gap-3">
               <div className="w-25 h-20 overflow-hidden">
-                <img src="/icon-2.png" alt="Nitip Catip" className="w-full h-full object-cover" />
+                <img
+                  src="/icon-2.png"
+                  alt="Nitip Catip"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
             <p className="text-sm font-bold text-white/70 leading-relaxed max-w-sm">
@@ -217,7 +231,6 @@ export default function OrderPage() {
               Navigasi Halaman
             </h5>
             <ul className="space-y-2 text-sm font-bold">
-           
               <li>
                 <a
                   href="#request-form"
@@ -227,12 +240,18 @@ export default function OrderPage() {
                 </a>
               </li>
               <li>
-                <a href="/cart" className="hover:text-pink transition-colors flex items-center gap-1">
+                <a
+                  href="/cart"
+                  className="hover:text-pink transition-colors flex items-center gap-1"
+                >
                   <ShoppingCart className="w-3.5 h-3.5" /> Keranjang Saya
                 </a>
               </li>
               <li>
-                <a href="/riwayat" className="hover:text-pink transition-colors flex items-center gap-1">
+                <a
+                  href="/riwayat"
+                  className="hover:text-pink transition-colors flex items-center gap-1"
+                >
                   <History className="w-3.5 h-3.5" /> Riwayat Pesanan
                 </a>
               </li>
