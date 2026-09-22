@@ -14,6 +14,10 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  if (pathname === "/admin/login") {
+    return children;
+  }
+
   const handleLogout = async () => {
     await fetch("/api/admin/login", { method: "DELETE" });
     window.location.href = "/admin/login";
