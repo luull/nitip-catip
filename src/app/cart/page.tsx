@@ -13,7 +13,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { FeeSettings } from "@/types";
+import { FeeSettings, normalizeProductUrl } from "@/types";
 import { DEFAULT_FEE_SETTINGS } from "@/config/jastip";
 import NbButton from "@/components/ui/NbButton";
 import NbCard from "@/components/ui/NbCard";
@@ -22,12 +22,14 @@ import NbTextArea from "@/components/ui/NbTextArea";
 import OrderPreviewModal from "@/components/OrderPreviewModal";
 import SuccessModal from "@/components/SuccessModal";
 import ShippingModal from "@/components/ShippingModal";
+import SiteFooter from "@/components/SiteFooter";
 import Swal from "sweetalert2";
 
 interface CheckoutFormData {
   namaPemesan: string;
   whatsapp: string;
   email: string;
+  alamatLengkap: string;
   kotaTujuan: string;
   kodePos: string;
   catatan: string;
@@ -37,6 +39,7 @@ const EMPTY_FORM: CheckoutFormData = {
   namaPemesan: "",
   whatsapp: "",
   email: "",
+  alamatLengkap: "",
   kotaTujuan: "",
   kodePos: "",
   catatan: "",
@@ -103,6 +106,7 @@ export default function CartPage() {
     else if (form.whatsapp.length < 9) newErrors.whatsapp = "Minimal 9 digit";
     if (!form.email.trim()) newErrors.email = "Email wajib diisi";
     else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = "Format email tidak valid";
+    if (!form.alamatLengkap.trim()) newErrors.alamatLengkap = "Alamat lengkap wajib diisi";
     if (!form.kotaTujuan.trim()) newErrors.kotaTujuan = "Kota wajib diisi";
     if (!form.kodePos.trim()) newErrors.kodePos = "Kode pos wajib diisi";
     else if (!/^[0-9]+$/.test(form.kodePos)) newErrors.kodePos = "Hanya angka";
@@ -126,11 +130,12 @@ export default function CartPage() {
       namaPemesan: form.namaPemesan,
       whatsapp: form.whatsapp,
       email: form.email,
+      alamatLengkap: form.alamatLengkap,
       kotaTujuan: form.kotaTujuan,
       kodePos: form.kodePos,
       items: items.map((item) => ({
         namaBarang: item.namaBarang,
-        linkProduk: item.linkProduk,
+        linkProduk: normalizeProductUrl(item.linkProduk),
         ukuranVarian: item.ukuranVarian || "",
         warna: item.warna || "",
         jumlah: item.jumlah,
@@ -196,7 +201,7 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8FB] text-black antialiased font-sans">
+    <div className="min-h-screen bg-[#FFF8FB] text-black antialiased font-sans flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b-4 border-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
@@ -223,7 +228,7 @@ export default function CartPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <main className="w-full max-w-4xl flex-1 mx-auto px-4 sm:px-6 py-8 space-y-6">
         {items.length === 0 && !showCheckout ? (
           <NbCard variant="white" className="p-12 border-4 border-black text-center">
             <ShoppingCart className="w-20 h-20 mx-auto text-black/20 stroke-[1.5]" />
@@ -267,7 +272,7 @@ export default function CartPage() {
                         <h4 className="font-black text-base">{item.namaBarang}</h4>
                         {item.linkProduk && (
                           <a
-                            href={item.linkProduk}
+                            href={normalizeProductUrl(item.linkProduk)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-pink hover:underline truncate block max-w-sm mt-0.5"
@@ -372,7 +377,17 @@ export default function CartPage() {
                       error={errors.email}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <NbTextArea
+                    label="Alamat Lengkap"
+                    requiredMark
+                    rows={6}
+                    className="min-h-[170px]"
+                    value={form.alamatLengkap}
+                    onChange={(e) => setForm({ ...form, alamatLengkap: e.target.value })}
+                    placeholder="Tulis alamat lengkap: nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, dan patokan..."
+                    error={errors.alamatLengkap}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <NbInput
                       label="Kota Tujuan"
                       requiredMark
@@ -536,11 +551,7 @@ export default function CartPage() {
         namaPemesan={submittedData?.namaPemesan || ""}
       />
 
-      <footer className="bg-black text-white py-8 border-t-4 border-black mt-12">
-        <div className="max-w-4xl mx-auto px-4 text-center text-xs font-bold text-white/50">
-          <p>&copy; {new Date().getFullYear()} Nitip Catip Jasa Titip</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

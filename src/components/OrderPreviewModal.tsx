@@ -92,9 +92,12 @@ export default function OrderPreviewModal({
               </div>
               <div>
                 <span className="text-black/60 block text-xs uppercase font-black">
-                  Alamat Tujuan
+                  Alamat Lengkap
                 </span>
-                <span className="text-black">
+                <span className="text-black whitespace-pre-wrap">
+                  {orderData.alamatLengkap}
+                </span>
+                <span className="text-black/70 block mt-1">
                   {orderData.kotaTujuan}, {orderData.kodePos}
                 </span>
               </div>

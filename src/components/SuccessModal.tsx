@@ -42,12 +42,13 @@ export default function SuccessModal({
   };
 
   const generateWAMessage = () => {
-    let itemsText = orderData.items
+    const itemsText = orderData.items
       .map(
         (item, i) =>
           `
 *Produk #${i + 1}:*
 - Nama Barang: ${item.namaBarang}
+- Link Produk: ${item.linkProduk}
 - Varian/Ukuran: ${item.ukuranVarian || "-"}
 - Warna: ${item.warna || "-"}
 - Jumlah: ${item.jumlah} pcs
@@ -61,6 +62,7 @@ export default function SuccessModal({
 *Data Pemesan:*
 - Nama: ${orderData.namaPemesan}
 - WhatsApp: ${orderData.whatsapp}
+- Alamat Lengkap: ${orderData.alamatLengkap}
 - Kota Tujuan: ${orderData.kotaTujuan} (${orderData.kodePos})
 
 ${itemsText}

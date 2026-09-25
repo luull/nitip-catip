@@ -20,6 +20,7 @@ import { DbOrder } from "@/types";
 import NbButton from "@/components/ui/NbButton";
 import NbInput from "@/components/ui/NbInput";
 import NbCard from "@/components/ui/NbCard";
+import SiteFooter from "@/components/SiteFooter";
 
 const WA_ADMIN_NUMBER =
   process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || "6281809010906";
@@ -108,7 +109,7 @@ function RiwayatContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8FB] text-black antialiased font-sans">
+    <div className="min-h-screen bg-[#FFF8FB] text-black antialiased font-sans flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b-4 border-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
@@ -138,7 +139,7 @@ function RiwayatContent() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main className="w-full max-w-4xl flex-1 mx-auto px-4 sm:px-6 py-8 space-y-8">
         {/* Search Form */}
         <NbCard variant="white" className="p-6 border-4 border-black">
           <h3 className="font-black text-lg uppercase mb-4">
@@ -343,12 +344,7 @@ function RiwayatContent() {
           })}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-black text-white py-8 border-t-4 border-black mt-12">
-        <div className="max-w-4xl mx-auto px-4 text-center text-xs font-bold text-white/50">
-          <p>&copy; {new Date().getFullYear()} Nitip Catip Jasa Titip</p>
-        </div>
-      </footer>
+      <SiteFooter />
       {/* Image Preview Modal */}
       {previewImage && (
         <div

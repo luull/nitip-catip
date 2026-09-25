@@ -1,6 +1,7 @@
 "use client";
 
 import OrderForm from "@/components/OrderForm";
+import SiteFooter from "@/components/SiteFooter";
 import NbBadge from "@/components/ui/NbBadge";
 import NbButton from "@/components/ui/NbButton";
 import { CatalogItem, OpenTrip } from "@/types";
@@ -207,84 +208,7 @@ export default function OrderPage() {
         />
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-black text-white py-16 border-t-4 border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="space-y-4 col-span-1 md:col-span-2">
-            <div className="flex items-center gap-3">
-              <div className="w-25 h-20 overflow-hidden">
-                <img
-                  src="/icon-2.png"
-                  alt="Nitip Catip"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            <p className="text-sm font-bold text-white/70 leading-relaxed max-w-sm">
-              Nitip Catip adalah platform perantara jasa titip (jastip) belanja
-              barang dari berbagai tempat viral, dan terpercaya aman jaya
-            </p>
-          </div>
-
-          <div>
-            <h5 className="text-pink font-black text-sm uppercase tracking-wider mb-4 border-b-2 border-pink pb-1 w-fit">
-              Navigasi Halaman
-            </h5>
-            <ul className="space-y-2 text-sm font-bold">
-              <li>
-                <a
-                  href="#request-form"
-                  className="hover:text-pink transition-colors"
-                >
-                  Form Pemesanan
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/cart"
-                  className="hover:text-pink transition-colors flex items-center gap-1"
-                >
-                  <ShoppingCart className="w-3.5 h-3.5" /> Keranjang Saya
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/riwayat"
-                  className="hover:text-pink transition-colors flex items-center gap-1"
-                >
-                  <History className="w-3.5 h-3.5" /> Riwayat Pesanan
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://chat.whatsapp.com/GR91ffPlxPuI1jfG3ABrup?mode=gi_t"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-green transition-colors flex items-center gap-1"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Grup WhatsApp Jastip
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h5 className="text-green font-black text-sm uppercase tracking-wider mb-4 border-b-2 border-green pb-1 w-fit">
-              Layanan Hubungi
-            </h5>
-            <ul className="space-y-2 text-sm font-bold">
-              <li>Instagram: nitipcatip.id</li>
-              <li>Whatsapp: 0818-0901-0906 </li>
-              <li>Jam Operasional: 09:00 - 17:00 WIB</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t-2 border-white/20 mt-12 pt-6 text-center text-xs font-bold text-white/50">
-          <p>&copy; {new Date().getFullYear()} Nitip Catip Jasa Titip</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

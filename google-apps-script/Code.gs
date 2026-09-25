@@ -29,7 +29,8 @@ var HEADERS = [
   "Kode Pos",
   "Catatan",
   "Lampiran URL",
-  "Lampiran Name"
+  "Lampiran Name",
+  "Alamat Lengkap"
 ];
 
 // ─── POST HANDLER ─────────────────────────────────────────────
@@ -41,6 +42,8 @@ function doPost(e) {
 
     if (sheet.getLastRow() === 0) {
       setupHeaders(sheet);
+    } else {
+      ensureHeaders(sheet);
     }
 
     // Check for admin action: Update Status
@@ -90,7 +93,8 @@ function doPost(e) {
         data.kodePos           || "",
         data.catatan           || "-",
         lampiranLink           || "-",
-        data.lampiranName      || "-"
+        data.lampiranName      || "-",
+        data.alamatLengkap     || "-"
       ]);
 
       var lastRow = sheet.getLastRow();
@@ -154,7 +158,8 @@ function doGet(e) {
             kodePos: row[17],
             catatan: row[18],
             lampiranUrl: row[19],
-            lampiranName: row[20]
+            lampiranName: row[20],
+            alamatLengkap: row[21]
           });
         }
       }
@@ -188,6 +193,17 @@ function getOrCreateSheet() {
     sheet = ss.insertSheet(SHEET_NAME);
   }
   return sheet;
+}
+
+function ensureHeaders(sheet) {
+  var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+  var currentHeaders = headerRange.getValues()[0];
+
+  for (var i = 0; i < HEADERS.length; i++) {
+    if (!currentHeaders[i]) {
+      sheet.getRange(1, i + 1).setValue(HEADERS[i]);
+    }
+  }
 }
 
 function setupHeaders(sheet) {

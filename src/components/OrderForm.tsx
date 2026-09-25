@@ -18,6 +18,7 @@ import {
   CatalogItem,
   OpenTrip,
   FeeSettings,
+  normalizeProductUrl,
 } from "@/types";
 import { DEFAULT_FEE_SETTINGS } from "@/config/jastip";
 import { useCart } from "@/context/CartContext";
@@ -99,6 +100,7 @@ export default function OrderForm({
       namaPemesan: "",
       whatsapp: "",
       email: "",
+      alamatLengkap: "",
       kotaTujuan: "",
       kodePos: "",
       items: [{ ...EMPTY_ITEM }],
@@ -433,8 +435,19 @@ export default function OrderForm({
               error={errors.whatsapp?.message}
             />
 
+            {/* Alamat Lengkap */}
+            <NbTextArea
+              label="Alamat Lengkap"
+              requiredMark
+              rows={6}
+              className="min-h-[170px]"
+              {...register("alamatLengkap")}
+              placeholder="Tulis alamat lengkap: nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, dan patokan..."
+              error={errors.alamatLengkap?.message}
+            />
+
             {/* Kota Tujuan & Kode Pos */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <NbInput
                 label="Kota Tujuan"
                 requiredMark
@@ -649,7 +662,7 @@ export default function OrderForm({
                     if (item && item.namaBarang) {
                       addItem({
                         namaBarang: item.namaBarang,
-                        linkProduk: item.linkProduk,
+                        linkProduk: normalizeProductUrl(item.linkProduk),
                         ukuranVarian: item.ukuranVarian,
                         warna: item.warna,
                         jumlah: item.jumlah || 1,
@@ -772,6 +785,16 @@ function ProductItemCard({
 }: ProductItemCardProps) {
   const watchSizeOrder = watch(`items.${index}.sizeOrder`, "small");
   const itemError = errors?.items?.[index];
+  const linkProdukField = register(`items.${index}.linkProduk`);
+
+  const normalizeLinkOnBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    linkProdukField.onBlur(event);
+    const normalizedUrl = normalizeProductUrl(event.target.value);
+    setValue(`items.${index}.linkProduk`, normalizedUrl, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
 
   return (
     <NbCard
@@ -808,10 +831,17 @@ function ProductItemCard({
       <NbInput
         label="Link Produk"
         requiredMark
-        {...register(`items.${index}.linkProduk`)}
-        placeholder="https://www.gentlewomanonline.com/..."
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        {...linkProdukField}
+        onBlur={normalizeLinkOnBlur}
+        placeholder="Contoh: shopee.co.id/produk/..."
         error={itemError?.linkProduk?.message}
       />
+      <p className="-mt-3 text-[11px] font-bold text-black/60">
+        Boleh ditempel dengan atau tanpa https:// — link akan dirapikan otomatis.
+      </p>
 
       {/* Varian & Warna */}
       <div className="grid grid-cols-2 gap-3">

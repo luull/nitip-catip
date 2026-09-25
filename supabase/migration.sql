@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS customers (
   nama_pemesan TEXT NOT NULL,
   whatsapp TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL,
+  alamat_lengkap TEXT NOT NULL,
   kota_tujuan TEXT NOT NULL,
   kode_pos TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS orders (
   nama_pemesan TEXT NOT NULL,
   whatsapp TEXT NOT NULL,
   email TEXT NOT NULL,
+  alamat_lengkap TEXT NOT NULL,
   kota_tujuan TEXT NOT NULL,
   kode_pos TEXT NOT NULL,
   total_harga_barang BIGINT DEFAULT 0,
@@ -36,6 +38,10 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add address columns to existing installations without affecting old rows
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS alamat_lengkap TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS alamat_lengkap TEXT;
 
 -- 3. Order items table
 CREATE TABLE IF NOT EXISTS order_items (

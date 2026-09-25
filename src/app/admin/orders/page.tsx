@@ -25,6 +25,7 @@ interface AdminOrder {
   namaPemesan: string;
   whatsapp: string;
   email: string;
+  alamatLengkap: string;
   kotaTujuan: string;
   kodePos: string;
   totalPembayaran: number;
@@ -284,6 +285,12 @@ export default function AdminOrders() {
                     <span>📍 {order.kotaTujuan} ({order.kodePos})</span>
                     <span>💳 {order.paymentMethod?.toUpperCase() || "QRIS"}</span>
                   </div>
+                  {order.alamatLengkap && (
+                    <div className="border-2 border-black bg-green-light/20 p-3 text-xs font-bold whitespace-pre-wrap">
+                      <span className="block font-black uppercase mb-1">Alamat Lengkap</span>
+                      {order.alamatLengkap}
+                    </div>
+                  )}
 
                   {/* Items */}
                   {hasMultipleItems && (
@@ -324,6 +331,16 @@ export default function AdminOrders() {
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <div className="min-w-0">
                             <p className="font-black truncate">{item.nama_barang}</p>
+                            {item.link_produk && (
+                              <a
+                                href={item.link_produk}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs font-black text-pink hover:underline"
+                              >
+                                Buka produk <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
                             <p className="text-xs text-black/60">
                               {item.jumlah}x · {item.size_order?.toUpperCase()}
                               {item.ukuran_varian ? ` · ${item.ukuran_varian}` : ""}

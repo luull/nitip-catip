@@ -37,6 +37,7 @@ export async function GET() {
       namaPemesan: order.nama_pemesan,
       whatsapp: order.whatsapp,
       email: order.email,
+      alamatLengkap: order.alamat_lengkap || "",
       kotaTujuan: order.kota_tujuan,
       kodePos: order.kode_pos,
       totalPembayaran: order.total_pembayaran,

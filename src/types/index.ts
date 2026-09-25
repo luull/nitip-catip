@@ -1,11 +1,41 @@
 import { z } from "zod";
 
+/**
+ * Makes pasted product links clickable without requiring users to type a protocol.
+ * Unknown/unsafe protocols are kept unchanged so the schema can reject them.
+ */
+export function normalizeProductUrl(value: string): string {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return trimmedValue;
+  if (/^\/\//.test(trimmedValue)) return `https:${trimmedValue}`;
+  if (/^[a-z][a-z\d+.-]*:/i.test(trimmedValue)) return trimmedValue;
+
+  return `https://${trimmedValue}`;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export const productItemSchema = z.object({
   namaBarang: z.string().min(1, "Nama produk wajib diisi"),
   linkProduk: z
     .string()
+    .trim()
     .min(1, "Link produk wajib diisi")
-    .url("Format link produk tidak valid"),
+    .transform(normalizeProductUrl)
+    .pipe(
+      z
+        .string()
+        .url("Format link produk tidak valid")
+        .refine(isHttpUrl, "Link produk harus menggunakan http atau https"),
+    ),
   ukuranVarian: z.string().optional(),
   warna: z.string().optional(),
   jumlah: z.number().min(1, "Jumlah minimal 1"),
@@ -33,6 +63,7 @@ export const orderFormSchema = z.object({
     .string()
     .min(1, "Email wajib diisi")
     .email("Format email tidak valid"),
+  alamatLengkap: z.string().trim().min(1, "Alamat lengkap wajib diisi"),
   kotaTujuan: z.string().min(1, "Kota tujuan wajib diisi"),
   kodePos: z
     .string()
@@ -56,6 +87,7 @@ export interface DbCustomer {
   nama_pemesan: string;
   whatsapp: string;
   email: string;
+  alamat_lengkap: string;
   kota_tujuan: string;
   kode_pos: string;
   created_at: string;
@@ -83,6 +115,7 @@ export interface DbOrder {
   nama_pemesan: string;
   whatsapp: string;
   email: string;
+  alamat_lengkap: string;
   kota_tujuan: string;
   kode_pos: string;
   total_harga_barang: number;
@@ -132,6 +165,7 @@ export interface Order {
   namaPemesan: string;
   whatsapp: string;
   email: string;
+  alamatLengkap: string;
   kotaTujuan: string;
   kodePos: string;
   // Flat product fields (from Google Sheet rows)
